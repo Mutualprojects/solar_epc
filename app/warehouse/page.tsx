@@ -167,6 +167,7 @@ export default function WarehousePage() {
     remarks: ""
   });
   const [outwardImages, setOutwardImages] = useState<string[]>([]);
+  const [inwardImages, setInwardImages] = useState<string[]>([]);
   const [uploadProgress, setUploadProgress] = useState<number | null>(null);
 
   const [lightboxImages, setLightboxImages] = useState<string[] | null>(null);
@@ -332,7 +333,11 @@ export default function WarehousePage() {
       const isEdit = inwardModalMode === "edit";
       const url = "/api/material-inward";
       const method = isEdit ? "PATCH" : "POST";
-      const payload = isEdit ? { ...inwardForm, id: editingInwardId } : inwardForm;
+      const payload = {
+        ...inwardForm,
+        inward_images: inwardImages,
+        ...(isEdit ? { id: editingInwardId } : {})
+      };
 
       const res = await fetch(url, {
         method,
@@ -348,6 +353,7 @@ export default function WarehousePage() {
           vendor_name: "",
           remarks: ""
         });
+        setInwardImages([]);
         setToast({ 
           message: isEdit ? "Inward stock entry updated successfully!" : "Inward stock entry added successfully!", 
           type: "success" 
@@ -416,6 +422,82 @@ export default function WarehousePage() {
 
   const removeOutwardImage = (index: number) => {
     setOutwardImages(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleInwardFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setUploadProgress(10);
+      try {
+        const files = Array.from(e.target.files);
+        const uploadedUrls: string[] = [];
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i];
+
+          // Validate file type
+          if (!file.type.startsWith('image/')) {
+            throw new Error(`File "${file.name}" is not a valid image file.`);
+          }
+
+          const options = {
+            maxSizeMB: 1,
+            maxWidthOrHeight: 1920,
+            useWebWorker: true,
+            fileType: 'image/webp'
+          };
+          
+          const compressedBlob = await imageCompression(file, options);
+          const newFileName = file.name.replace(/\.[^/.]+$/, ".webp");
+          const compressedFile = new File([compressedBlob], newFileName, { type: 'image/webp' });
+
+          const uniqueSuffix = `${Date.now()}-${Math.random().toString(36).substring(7)}`;
+          const filePath = `inward/${uniqueSuffix}-${compressedFile.name}`;
+
+          let usedBucket = 'solar_module';
+          let uploadResult = await supabase.storage
+            .from(usedBucket)
+            .upload(filePath, compressedFile, {
+              cacheControl: '3600',
+              upsert: false
+            });
+
+          // Graceful fallback to 'solar_modules' if 'solar_module' fails
+          if (uploadResult.error) {
+            console.warn("Upload to 'solar_module' bucket failed, attempting fallback to 'solar_modules'...", uploadResult.error.message);
+            usedBucket = 'solar_modules';
+            uploadResult = await supabase.storage
+              .from(usedBucket)
+              .upload(filePath, compressedFile, {
+                cacheControl: '3600',
+                upsert: false
+              });
+          }
+
+          if (uploadResult.error) {
+            throw new Error(`Upload failed for "${file.name}": ${uploadResult.error.message}`);
+          }
+
+          const { data: urlData } = supabase.storage
+            .from(usedBucket)
+            .getPublicUrl(uploadResult.data.path);
+
+          uploadedUrls.push(urlData.publicUrl);
+          setUploadProgress(Math.round(((i + 1) / files.length) * 100));
+        }
+
+        setInwardImages(prev => [...prev, ...uploadedUrls]);
+        setToast({ message: "Images uploaded successfully!", type: "success" });
+      } catch (err: any) {
+        console.error("Image upload error:", err);
+        setToast({ message: err.message || "Failed to upload images.", type: "error" });
+      } finally {
+        setUploadProgress(null);
+      }
+    }
+  };
+
+  const removeInwardImage = (index: number) => {
+    setInwardImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSaveOutward = async (e: React.FormEvent) => {
@@ -578,6 +660,7 @@ export default function WarehousePage() {
                     vendor_name: "",
                     remarks: ""
                   });
+                  setInwardImages([]);
                   setInwardModalMode("add");
                   setEditingInwardId(null);
                   setIsAddInwardOpen(true);
@@ -702,6 +785,7 @@ export default function WarehousePage() {
                   vendor_name: entry.vendor_name || "",
                   remarks: entry.remarks || ""
                 });
+                setInwardImages(Array.isArray(entry.inward_images) ? entry.inward_images : []);
                 setInwardModalMode("edit");
                 setEditingInwardId(entry.id);
                 setIsAddInwardOpen(true);
@@ -1008,6 +1092,51 @@ export default function WarehousePage() {
                   onChange={(e) => setInwardForm({...inwardForm, remarks: e.target.value})}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-emerald-500 focus:bg-white transition-all resize-none"
                 />
+              </div>
+
+              {/* Image Upload for inward_images */}
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Inward Verification Images</label>
+                <div className="border-2 border-dashed border-slate-200 hover:border-emerald-500 rounded-2xl p-6 transition-all bg-slate-50/50 flex flex-col items-center justify-center gap-2 cursor-pointer relative group">
+                  <input 
+                    type="file" 
+                    multiple
+                    accept="image/*"
+                    onChange={handleInwardFileChange}
+                    className="absolute inset-0 opacity-0 cursor-pointer"
+                  />
+                  <UploadCloud className="w-8 h-8 text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                  <p className="text-xs font-bold text-slate-500 text-center">Click or Drag &amp; Drop Inward Receipt Photos</p>
+                  <p className="text-[9px] font-semibold text-slate-400">Supports PNG, JPG, WEBP (Max 10MB per file)</p>
+                </div>
+
+                {uploadProgress !== null && (
+                  <div className="w-full bg-slate-100 rounded-full h-1.5 mt-2 overflow-hidden">
+                    <div className="bg-emerald-500 h-1.5 rounded-full transition-all duration-300 animate-pulse" style={{ width: `${uploadProgress}%` }}></div>
+                  </div>
+                )}
+
+                {/* Uploaded Images Preview */}
+                {inwardImages.length > 0 && (
+                  <div className="grid grid-cols-3 gap-3 mt-2">
+                    {inwardImages.map((url, index) => (
+                      <div key={index} className="relative rounded-xl border border-slate-200 overflow-hidden aspect-video group">
+                        <img 
+                          src={url} 
+                          alt={`Upload Preview ${index + 1}`}
+                          className="object-cover w-full h-full"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeInwardImage(index)}
+                          className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-rose-500 hover:bg-rose-600 text-white flex items-center justify-center shadow-lg transition-colors cursor-pointer"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center justify-end gap-2 border-t border-slate-100 pt-4 mt-2">
@@ -1398,11 +1527,11 @@ function WarehouseTable({
             <thead>
               <tr className="border-b border-slate-100 bg-slate-50/70">
                 {type === "inward" ? (
-                  ["Inward ID", "Invoice ID", "Vendor / Supplier", "Destination", "Date Received", "Remarks", "Actions"].map(h => (
+                  ["Inward ID", "Invoice ID", "Vendor / Supplier", "Destination", "Date Received", "Images", "Remarks", "Actions"].map(h => (
                     <th key={h} className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">{h}</th>
                   ))
                 ) : (
-                  ["Date", "Destination School", "Warehouse", "DC Number", "Driver & Vehicle", "Dispatched Qty", "Images", "Remarks", "Actions"].map(h => (
+                  ["Destination School", "Warehouse", "DC Number", "Driver & Vehicle", "Dispatched Qty", "Images", "Remarks", "Actions"].map(h => (
                     <th key={h} className="px-5 py-3 text-[10px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">{h}</th>
                   ))
                 )}
@@ -1414,6 +1543,7 @@ function WarehouseTable({
                   const displayDate = row.created_at 
                     ? new Date(row.created_at).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) 
                     : "N/A";
+                  const images = Array.isArray(row.inward_images) ? row.inward_images : [];
                   return (
                     <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
                       <td className="px-5 py-3.5">
@@ -1442,6 +1572,23 @@ function WarehouseTable({
                         </span>
                       </td>
                       <td className="px-5 py-3.5">
+                        {images.length > 0 ? (
+                          <button 
+                            onClick={() => {
+                              if (window && (window as any).showLightbox) {
+                                (window as any).showLightbox(images);
+                              }
+                            }}
+                            className="inline-flex items-center gap-1 text-[10px] font-black text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded hover:bg-emerald-600 hover:text-white transition-all shadow-sm cursor-pointer"
+                          >
+                            <ImageIcon className="w-3 h-3 text-emerald-600 group-hover:text-white" />
+                            {images.length}
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-bold font-['DM_Sans']">No images</span>
+                        )}
+                      </td>
+                      <td className="px-5 py-3.5">
                         <p className="text-[11px] font-semibold text-slate-400 max-w-[180px] truncate" title={row.remarks || ""}>
                           {row.remarks || "—"}
                         </p>
@@ -1466,12 +1613,6 @@ function WarehouseTable({
                   
                   return (
                     <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
-                      <td className="px-5 py-3.5">
-                        <span className="text-[12px] font-semibold text-slate-500 whitespace-nowrap flex items-center gap-1">
-                          <Calendar className="w-3.5 h-3.5 text-slate-300" />
-                          {displayDate}
-                        </span>
-                      </td>
                       <td className="px-5 py-3.5">
                         <div className="flex flex-col">
                           <span className="font-extrabold text-slate-800 text-[12px] uppercase leading-tight">{row.schoolName || "—"}</span>

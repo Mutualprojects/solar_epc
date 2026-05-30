@@ -13,16 +13,17 @@ import {
 } from "recharts";
 import { SessionNavBar } from "@/components/ui/sidebar";
 import { SharedHeader } from "@/components/ui/header";
+import DashboardFilter from "@/components/DashboardFilter";
 
 // Skeleton Component for Cards
 const SkeletonCard = () => (
-  <div className="bg-white rounded-2xl p-6 border border-slate-100 shadow-sm animate-pulse flex flex-col justify-between h-40">
+  <div className="bg-white rounded-2xl p-4 border border-slate-100 shadow-sm animate-pulse flex flex-col justify-between h-32">
     <div>
-      <div className="flex items-center justify-between mb-4">
-        <div className="h-4 bg-slate-100 rounded w-1/2" />
-        <div className="w-10 h-10 bg-slate-150 rounded-xl" />
+      <div className="flex items-center justify-between mb-2">
+        <div className="h-3 bg-slate-100 rounded w-1/2" />
+        <div className="w-5 h-5 bg-slate-150 rounded" />
       </div>
-      <div className="h-8 bg-slate-100 rounded w-2/3 mb-2" />
+      <div className="h-6 bg-slate-100 rounded w-2/3 mb-1" />
     </div>
     <div className="h-3 bg-slate-100 rounded w-full" />
   </div>
@@ -40,6 +41,37 @@ const SkeletonChart = () => (
     </div>
   </div>
 );
+
+// Animated Counter Component
+const AnimatedCounter = ({ value }: { value: number }) => {
+  const [count, setCount] = useState(0);
+
+  useEffect(() => {
+    let start = 0;
+    const end = value;
+    if (start === end) {
+      setCount(end);
+      return;
+    }
+
+    const duration = 800; // Animation duration in ms
+    const stepTime = Math.abs(Math.floor(duration / end)) || 15;
+    
+    const timer = setInterval(() => {
+      start += Math.ceil(end / 40); // Proportional increments
+      if (start >= end) {
+        clearInterval(timer);
+        setCount(end);
+      } else {
+        setCount(start);
+      }
+    }, stepTime);
+
+    return () => clearInterval(timer);
+  }, [value]);
+
+  return <>{count.toLocaleString()}</>;
+};
 
 export default function SuperAdminDashboard() {
   const router = useRouter();
@@ -551,158 +583,142 @@ export default function SuperAdminDashboard() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 select-none">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 select-none">
 
               {dataLoading ? (
                 Array.from({ length: 8 }).map((_, i) => <SkeletonCard key={i} />)
               ) : (
                 <>
                   {/* Card 1: Total Installed */}
-                  <div className="bg-white rounded-2xl p-6 border-l-4 border-l-emerald-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-emerald-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
-                      <CheckCircle2 className="w-20 h-20 text-emerald-600" />
+                      <CheckCircle2 className="w-16 h-16 text-emerald-600" />
                     </div>
-                    <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Installed</p>
-                      <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 group-hover:scale-110 transition-transform duration-300">
-                        <CheckCircle2 className="w-4.5 h-4.5" />
-                      </div>
+                      <CheckCircle2 className="w-5 h-5 text-emerald-600 group-hover:scale-110 transition-transform duration-300 shrink-0" />
                     </div>
-                    <div className="flex items-baseline gap-1.5 mb-2 select-none">
-                      <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none">{grandInstalledSystems}</h3>
-                      <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Systems</span>
+                    <div className="flex items-baseline gap-1 mb-1 select-none">
+                      <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none"><AnimatedCounter value={grandInstalledSystems} /></h3>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Systems</span>
                     </div>
-                    <p className="text-[10px] font-bold text-emerald-650 flex items-center gap-1.5 border-t border-slate-50 pt-2.5 mt-2 select-none">
-                      <TrendingUp className="w-3.5 h-3.5" />
+                    <p className="text-[10px] font-bold text-emerald-650 flex items-center gap-1.5 border-t border-slate-50 pt-1.5 mt-1.5 select-none">
+                      <TrendingUp className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       {grandInstalledSystems} Systems / {grandInstalledSchools} Schools Installed
                     </p>
                   </div>
 
                   {/* Card 2: Pending Installations */}
-                  <div className="bg-white rounded-2xl p-6 border-l-4 border-l-indigo-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-indigo-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
-                      <Clock className="w-20 h-20 text-indigo-600" />
+                      <Clock className="w-16 h-16 text-indigo-600" />
                     </div>
-                    <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Pending Installations</p>
-                      <div className="w-9 h-9 rounded-xl bg-indigo-50 border border-indigo-100 flex items-center justify-center text-indigo-600 group-hover:scale-110 transition-transform duration-300">
-                        <Clock className="w-4.5 h-4.5" />
-                      </div>
+                      <Clock className="w-5 h-5 text-indigo-600 group-hover:scale-110 transition-transform duration-300 shrink-0" />
                     </div>
-                    <div className="flex items-baseline gap-1.5 mb-2 select-none">
-                      <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none">{grandPendingSystems}</h3>
-                      <span className="text-xs font-black text-slate-400 uppercase tracking-wider">Systems</span>
+                    <div className="flex items-baseline gap-1 mb-1 select-none">
+                      <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none"><AnimatedCounter value={grandPendingSystems} /></h3>
+                      <span className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Systems</span>
                     </div>
-                    <p className="text-[10px] font-bold text-indigo-650 flex items-center gap-1.5 border-t border-slate-50 pt-2.5 mt-2 select-none">
-                      <Info className="w-3.5 h-3.5" />
+                    <p className="text-[10px] font-bold text-indigo-650 flex items-center gap-1.5 border-t border-slate-50 pt-1.5 mt-1.5 select-none">
+                      <Info className="w-3.5 h-3.5 text-indigo-600 shrink-0" />
                       {grandPendingSystems} Systems / {grandPendingSchools} Schools Pending
                     </p>
                   </div>
 
                   {/* Card 3: Total Schools */}
-                  <div className="bg-white rounded-2xl p-6 border-l-4 border-l-cyan-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-cyan-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-cyan-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-cyan-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
-                      <School className="w-20 h-20 text-cyan-600" />
+                      <School className="w-16 h-16 text-cyan-600" />
                     </div>
-                    <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Schools</p>
-                      <div className="w-9 h-9 rounded-xl bg-cyan-50 border border-cyan-100 flex items-center justify-center text-cyan-600 group-hover:scale-110 transition-transform duration-300">
-                        <School className="w-4.5 h-4.5" />
-                      </div>
+                      <School className="w-5 h-5 text-cyan-600 group-hover:scale-110 transition-transform duration-300 shrink-0" />
                     </div>
-                    <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-2.5 select-none">{grandSchools}</h3>
-                    <p className="text-[10px] font-bold text-cyan-650 flex items-center gap-1.5 border-t border-slate-50 pt-2.5 mt-2 select-none">
-                      <Info className="w-3.5 h-3.5" />
+                    <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1 select-none"><AnimatedCounter value={grandSchools} /></h3>
+                    <p className="text-[10px] font-bold text-cyan-650 flex items-center gap-1.5 border-t border-slate-50 pt-1.5 mt-1.5 select-none">
+                      <Info className="w-3.5 h-3.5 text-cyan-600 shrink-0" />
                       {grandSchools} Schools Registered
                     </p>
                   </div>
 
                   {/* Card 4: Total Systems */}
-                  <div className="bg-white rounded-2xl p-6 border-l-4 border-l-blue-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-blue-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
-                      <Zap className="w-20 h-20 text-blue-600" />
+                      <Zap className="w-16 h-16 text-blue-600" />
                     </div>
-                    <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Systems</p>
-                      <div className="w-9 h-9 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-600 group-hover:scale-110 transition-transform duration-300">
-                        <Zap className="w-4.5 h-4.5" />
-                      </div>
+                      <Zap className="w-5 h-5 text-blue-600 group-hover:scale-110 transition-transform duration-300 shrink-0" />
                     </div>
-                    <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-2.5 select-none">{totalSystemsCount}</h3>
-                    <p className="text-[10px] font-bold text-blue-650 flex items-center gap-1.5 border-t border-slate-50 pt-2.5 mt-2 select-none">
-                      <TrendingUp className="w-3.5 h-3.5" />
+                    <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1 select-none"><AnimatedCounter value={totalSystemsCount} /></h3>
+                    <p className="text-[10px] font-bold text-blue-650 flex items-center gap-1.5 border-t border-slate-50 pt-1.5 mt-1.5 select-none">
+                      <TrendingUp className="w-3.5 h-3.5 text-blue-600 shrink-0" />
                       {totalSystemsCount} Systems in Database
                     </p>
                   </div>
 
                   {/* Card 5: Tank Completed */}
-                  <div className="bg-white rounded-2xl p-6 border-l-4 border-l-sky-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-sky-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-sky-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-sky-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
-                      <Package className="w-20 h-20 text-sky-600" />
+                      <Package className="w-16 h-16 text-sky-600" />
                     </div>
-                    <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Tanks Completed</p>
-                      <div className="w-9 h-9 rounded-xl bg-sky-50 border border-sky-100 flex items-center justify-center text-sky-600 group-hover:scale-110 transition-transform duration-300">
-                        <Package className="w-4.5 h-4.5" />
-                      </div>
+                      <Package className="w-5 h-5 text-sky-600 group-hover:scale-110 transition-transform duration-300 shrink-0" />
                     </div>
-                    <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-2.5 select-none">{grandTank}</h3>
-                    <p className="text-[10px] font-bold text-sky-650 flex items-center gap-1.5 border-t border-slate-50 pt-2.5 mt-2 select-none">
-                      <ShieldCheck className="w-3.5 h-3.5" />
+                    <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1 select-none"><AnimatedCounter value={grandTank} /></h3>
+                    <p className="text-[10px] font-bold text-sky-650 flex items-center gap-1.5 border-t border-slate-50 pt-1.5 mt-1.5 select-none">
+                      <ShieldCheck className="w-3.5 h-3.5 text-sky-600 shrink-0" />
                       {grandTank} Tanks Complete
                     </p>
                   </div>
 
                   {/* Card 6: MMS Completed */}
-                  <div className="bg-white rounded-2xl p-6 border-l-4 border-l-amber-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-amber-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-amber-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-amber-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
-                      <Zap className="w-20 h-20 text-amber-600" />
+                      <Zap className="w-16 h-16 text-amber-600" />
                     </div>
-                    <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">MMS Completed</p>
-                      <div className="w-9 h-9 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600 group-hover:scale-110 transition-transform duration-300">
-                        <Zap className="w-4.5 h-4.5" />
-                      </div>
+                      <Zap className="w-5 h-5 text-amber-600 group-hover:scale-110 transition-transform duration-300 shrink-0" />
                     </div>
-                    <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-2.5 select-none">{grandMms}</h3>
-                    <p className="text-[10px] font-bold text-amber-650 flex items-center gap-1.5 border-t border-slate-50 pt-2.5 mt-2 select-none">
-                      <ShieldCheck className="w-3.5 h-3.5" />
+                    <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1 select-none"><AnimatedCounter value={grandMms} /></h3>
+                    <p className="text-[10px] font-bold text-amber-650 flex items-center gap-1.5 border-t border-slate-50 pt-1.5 mt-1.5 select-none">
+                      <ShieldCheck className="w-3.5 h-3.5 text-amber-600 shrink-0" />
                       {grandMms} Structures Certified
                     </p>
                   </div>
 
                   {/* Card 7: Collectors Completed */}
-                  <div className="bg-white rounded-2xl p-6 border-l-4 border-l-violet-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-violet-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-violet-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-violet-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
-                      <Grid className="w-20 h-20 text-violet-600" />
+                      <Grid className="w-16 h-16 text-violet-600" />
                     </div>
-                    <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Collectors Completed</p>
-                      <div className="w-9 h-9 rounded-xl bg-violet-50 border border-violet-100 flex items-center justify-center text-violet-600 group-hover:scale-110 transition-transform duration-300">
-                        <Grid className="w-4.5 h-4.5" />
-                      </div>
+                      <Grid className="w-5 h-5 text-violet-600 group-hover:scale-110 transition-transform duration-300 shrink-0" />
                     </div>
-                    <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-2.5 select-none">{grandCollectors}</h3>
-                    <p className="text-[10px] font-bold text-violet-650 flex items-center gap-1.5 border-t border-slate-50 pt-2.5 mt-2 select-none">
-                      <ShieldCheck className="w-3.5 h-3.5" />
+                    <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1 select-none"><AnimatedCounter value={grandCollectors} /></h3>
+                    <p className="text-[10px] font-bold text-violet-650 flex items-center gap-1.5 border-t border-slate-50 pt-1.5 mt-1.5 select-none">
+                      <ShieldCheck className="w-3.5 h-3.5 text-violet-600 shrink-0" />
                       {grandCollectors} Solar Arrays Live
                     </p>
                   </div>
 
                   {/* Card 8: Plumbing Completed */}
-                  <div className="bg-white rounded-2xl p-6 border-l-4 border-l-emerald-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-emerald-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
-                      <Wrench className="w-20 h-20 text-emerald-600" />
+                      <Wrench className="w-16 h-16 text-emerald-600" />
                     </div>
-                    <div className="flex items-center justify-between mb-3.5">
+                    <div className="flex items-center justify-between mb-2">
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Plumbing Completed</p>
-                      <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-650 group-hover:scale-110 transition-transform duration-300">
-                        <Wrench className="w-4.5 h-4.5" />
-                      </div>
+                      <Wrench className="w-5 h-5 text-emerald-650 group-hover:scale-110 transition-transform duration-300 shrink-0" />
                     </div>
-                    <h3 className="text-3xl font-black text-slate-800 tracking-tight leading-none mb-2.5 select-none">{grandPlumbing}</h3>
-                    <p className="text-[10px] font-bold text-emerald-650 flex items-center gap-1.5 border-t border-slate-50 pt-2.5 mt-2 select-none">
-                      <ShieldCheck className="w-3.5 h-3.5" />
+                    <h3 className="text-2xl font-black text-slate-800 tracking-tight leading-none mb-1 select-none"><AnimatedCounter value={grandPlumbing} /></h3>
+                    <p className="text-[10px] font-bold text-emerald-650 flex items-center gap-1.5 border-t border-slate-50 pt-1.5 mt-1.5 select-none">
+                      <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
                       {grandPlumbing} Hydraulics Active
                     </p>
                   </div>
@@ -806,408 +822,11 @@ export default function SuperAdminDashboard() {
                 </div>
               )}
             </div>
-
           </div>
 
-          {/* ── ADVANCED INTERACTIVE FILTER PANEL (RE-LOCATED BELOW CHARTS) ── */}
-          <div className="bg-white rounded-2xl border border-slate-200/80 p-5.5 shadow-sm shrink-0 select-none">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3.5 mb-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-teal-50 border border-teal-100 flex items-center justify-center text-teal-650">
-                  <ListFilter className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-widest leading-none mb-0.5">Interactive Data Filters</h3>
-                  <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Refine table records reactively</span>
-                </div>
-              </div>
-
-              {(selectedDistrict || selectedSchool || selectedStatus !== "All" || selectedMaterialStatus !== "All" || selectedTankStatus !== "All" || selectedMmsStatus !== "All" || selectedCollectorsStatus !== "All" || selectedPlumbingStatus !== "All") && (
-                <button
-                  onClick={clearFilters}
-                  className="flex items-center gap-1 text-[10px] font-black text-rose-700 hover:text-rose-800 uppercase tracking-wider bg-rose-50 hover:bg-rose-100/70 border border-rose-200 rounded-lg px-2.5 py-1 transition-all shrink-0 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  Clear Filters ({installations.length - filteredInstallations.length > 0 ? `${installations.length - filteredInstallations.length} Records Hidden` : 'None Active'})
-                </button>
-              )}
-            </div>
-
-            {/* Inline search bar inside filter panel */}
-            <div className="flex items-center gap-2 mb-4 pb-4 border-b border-slate-100">
-              <div className="relative flex-1">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search by school name, district, installation code..."
-                  className="w-full bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-650 rounded-xl pl-9 pr-4 py-2.5 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-['DM_Sans'] placeholder:font-normal placeholder:text-slate-400"
-                />
-              </div>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="flex items-center gap-1 text-[10px] font-black text-slate-600 hover:text-rose-700 uppercase tracking-wider bg-slate-100 hover:bg-rose-50 border border-slate-200 hover:border-rose-200 rounded-lg px-2.5 py-2.5 transition-all shrink-0 cursor-pointer"
-                >
-                  <X className="w-3.5 h-3.5" />
-                  Clear Search
-                </button>
-              )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-
-              {/* District Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-455 uppercase tracking-wider flex items-center gap-1">
-                  <MapPin className="w-3.5 h-3.5 text-slate-400" /> District
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedDistrict}
-                    onChange={(e) => {
-                      setSelectedDistrict(e.target.value);
-                      setSelectedSchool(""); // Clear school selection when district changes
-                    }}
-                    className="w-full appearance-none bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-650 rounded-xl px-3 py-2.5 pr-8 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-['DM_Sans'] cursor-pointer"
-                  >
-                    <option value="">All Districts ({allUniqueDistricts.length})</option>
-                    {allUniqueDistricts.map(d => (
-                      <option key={d} value={d}>{d}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* School Name Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-455 uppercase tracking-wider flex items-center gap-1">
-                  <School className="w-3.5 h-3.5 text-slate-400" /> School Name
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedSchool}
-                    onChange={(e) => setSelectedSchool(e.target.value)}
-                    className="w-full appearance-none bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-650 rounded-xl px-3 py-2.5 pr-8 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-['DM_Sans'] cursor-pointer"
-                  >
-                    <option value="">All Schools ({allSchoolsFilteredByDistrict.length})</option>
-                    {allSchoolsFilteredByDistrict.map(s => (
-                      <option key={s.id} value={s.id}>{s.name}</option>
-                    ))}
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Material Status Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-455 uppercase tracking-wider flex items-center gap-1">
-                  <Package className="w-3.5 h-3.5 text-slate-400" /> Material Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedMaterialStatus}
-                    onChange={(e) => setSelectedMaterialStatus(e.target.value)}
-                    className="w-full appearance-none bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-650 rounded-xl px-3 py-2.5 pr-8 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-['DM_Sans'] cursor-pointer"
-                  >
-                    <option value="All">All Material Statuses</option>
-                    <option value="Dispatched">Dispatched</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Tank Subsystem Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-455 uppercase tracking-wider flex items-center gap-1">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-slate-400" /> Tank Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedTankStatus}
-                    onChange={(e) => setSelectedTankStatus(e.target.value)}
-                    className="w-full appearance-none bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-650 rounded-xl px-3 py-2.5 pr-8 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-['DM_Sans'] cursor-pointer"
-                  >
-                    <option value="All">All Tank Statuses</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* MMS Subsystem Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-455 uppercase tracking-wider flex items-center gap-1">
-                  <Zap className="w-3.5 h-3.5 text-slate-400" /> MMS Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedMmsStatus}
-                    onChange={(e) => setSelectedMmsStatus(e.target.value)}
-                    className="w-full appearance-none bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-650 rounded-xl px-3 py-2.5 pr-8 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-['DM_Sans'] cursor-pointer"
-                  >
-                    <option value="All">All MMS Statuses</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Collectors Subsystem Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-455 uppercase tracking-wider flex items-center gap-1">
-                  <Grid className="w-3.5 h-3.5 text-slate-400" /> Collectors Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedCollectorsStatus}
-                    onChange={(e) => setSelectedCollectorsStatus(e.target.value)}
-                    className="w-full appearance-none bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-650 rounded-xl px-3 py-2.5 pr-8 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-['DM_Sans'] cursor-pointer"
-                  >
-                    <option value="All">All Collector Statuses</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Plumbing Subsystem Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-455 uppercase tracking-wider flex items-center gap-1">
-                  <Wrench className="w-3.5 h-3.5 text-slate-400" /> Plumbing Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedPlumbingStatus}
-                    onChange={(e) => setSelectedPlumbingStatus(e.target.value)}
-                    className="w-full appearance-none bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-650 rounded-xl px-3 py-2.5 pr-8 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-['DM_Sans'] cursor-pointer"
-                  >
-                    <option value="All">All Plumbing Statuses</option>
-                    <option value="Completed">Completed</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-              {/* Status Filter */}
-              <div className="flex flex-col gap-1.5">
-                <label className="text-[10px] font-black text-slate-455 uppercase tracking-wider flex items-center gap-1">
-                  <Clock className="w-3.5 h-3.5 text-slate-400" /> Overall Status
-                </label>
-                <div className="relative">
-                  <select
-                    value={selectedStatus}
-                    onChange={(e) => setSelectedStatus(e.target.value)}
-                    className="w-full appearance-none bg-slate-50 border border-slate-200/80 text-xs font-bold text-slate-650 rounded-xl px-3 py-2.5 pr-8 outline-none focus:bg-white focus:ring-2 focus:ring-teal-500/20 focus:border-teal-500 transition-all font-['DM_Sans'] cursor-pointer"
-                  >
-                    <option value="All">All Overall Statuses</option>
-                    <option value="Completed">Completed</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="Pending">Pending</option>
-                  </select>
-                  <ChevronDown className="w-4 h-4 absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-                </div>
-              </div>
-
-            </div>
-          </div>
-
-          {/* ── DETAILED DATA GRID SECTION ── */}
-          <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden flex flex-col">
-
-            {/* Grid Header Panel styled like Inventory Hub */}
-            <div className="p-6 border-b border-slate-100 bg-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 select-none">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 bg-teal-50 rounded-xl flex items-center justify-center text-teal-600 shadow-sm border border-teal-100 shrink-0">
-                  <Clock className="w-4.5 h-4.5" />
-                </div>
-                <div>
-                  <h3 className="text-base font-extrabold text-slate-800 tracking-tight uppercase leading-tight">Execution Log Ledger</h3>
-                  <p className="text-[10px] font-semibold text-slate-400 mt-0.5">Detailed list of dynamic site installations matching current filters.</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 shrink-0">
-                <span className="text-xs font-semibold text-slate-400">
-                  Showing <span className="font-extrabold text-teal-600">{filteredInstallations.length}</span> of <span className="font-extrabold text-slate-600">{installations.length}</span> records
-                </span>
-                {filteredInstallations.length < installations.length && (
-                  <span className="text-[10px] font-black text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">
-                    {installations.length - filteredInstallations.length} filtered out
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Grid Table Container */}
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[1000px]">
-                <thead>
-                  <tr className="bg-slate-50 text-slate-500 text-xs uppercase tracking-wider font-bold">
-                    <th className="py-3 px-4 pl-6 border-b border-slate-100">School Details</th>
-                    <th className="py-3 px-4 border-b border-slate-100">District</th>
-                    <th className="py-3 px-4 border-b border-slate-100">Installation Code</th>
-                    <th className="py-3 px-4 border-b border-slate-100 text-center">Stages Milestones</th>
-                    <th className="py-3 px-4 border-b border-slate-100 text-center">Execution Progress</th>
-                    <th className="py-3 px-4 border-b border-slate-100 text-center">Overall Level</th>
-                    <th className="py-3 px-4 border-b border-slate-100">Dispatch Reference</th>
-                    <th className="py-3 px-4 border-b border-slate-100">Last Sync Date</th>
-                    <th className="py-3 px-4 pr-6 border-b border-slate-100 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm font-semibold text-slate-700 divide-y divide-slate-100">
-                  {dataLoading ? (
-                    Array.from({ length: 4 }).map((_, idx) => (
-                      <tr key={idx} className="animate-pulse">
-                        <td className="py-3.5 px-4 pl-6"><div className="h-4.5 bg-slate-100 rounded w-48 mb-1.5" /><div className="h-3 bg-slate-100 rounded w-24" /></td>
-                        <td className="py-3.5 px-4"><div className="h-4 bg-slate-100 rounded w-24" /></td>
-                        <td className="py-3.5 px-4"><div className="h-4 bg-slate-100 rounded w-32" /></td>
-                        <td className="py-3.5 px-4 text-center"><div className="h-6 bg-slate-150 rounded w-28 mx-auto" /></td>
-                        <td className="py-3.5 px-4 text-center"><div className="h-4 bg-slate-100 rounded w-24 mx-auto" /></td>
-                        <td className="py-3.5 px-4 text-center"><div className="h-6 bg-slate-100 rounded-full w-24 mx-auto" /></td>
-                        <td className="py-3.5 px-4"><div className="h-4 bg-slate-100 rounded w-28" /></td>
-                        <td className="py-3.5 px-4"><div className="h-4 bg-slate-100 rounded w-20" /></td>
-                        <td className="py-3.5 px-4 pr-6 text-right"><div className="h-7 bg-slate-100 rounded-lg w-16 ml-auto" /></td>
-                      </tr>
-                    ))
-                  ) : paginatedInstallations.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="p-16 text-center text-slate-400 bg-white">
-                        <div className="flex flex-col items-center justify-center gap-3">
-                          <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center text-slate-400 border border-slate-100">
-                            <Clock className="w-8 h-8" />
-                          </div>
-                          <h4 className="text-lg font-bold text-slate-800">No operational records match filter</h4>
-                          <p className="text-sm text-slate-500 max-w-sm">We could not find any active installation records matching the selected parameters. Try expanding your search queries.</p>
-                        </div>
-                      </td>
-                    </tr>
-                  ) : (
-                    paginatedInstallations.map((item) => {
-                      const itemSysCount = getSystemCount(item);
-                      return (
-                        <tr key={item.id} className="hover:bg-slate-50/50 transition-colors">
-
-                          {/* School Details */}
-                          <td className="py-3.5 px-4 pl-6">
-                            <div className="flex flex-col">
-                              <span className="font-extrabold text-slate-800 uppercase truncate max-w-[220px]" title={item.schools?.kgbv_name || "Unknown School"}>
-                                {item.schools?.kgbv_name || "Unknown School"}
-                              </span>
-                              <span className="inline-flex mt-1.5 w-fit px-2 py-0.5 bg-teal-50 text-teal-700 border border-teal-100 rounded-md text-[10px] font-black tracking-wider uppercase">
-                                {item.schools?.school_id || "N/A"}
-                              </span>
-                            </div>
-                          </td>
-
-                          {/* District */}
-                          <td className="py-3.5 px-4">
-                            <span className="text-slate-655 font-bold uppercase">{item.schools?.district || "N/A"}</span>
-                          </td>
-
-                          {/* Installation Code */}
-                          <td className="py-3.5 px-4 font-mono font-black text-xs text-slate-500 uppercase">
-                            {item.installation_code}
-                          </td>
-
-                          {/* Stage Milestone Dots */}
-                          <td className="py-3.5 px-4 text-center">
-                            <div className="inline-flex justify-center">
-                              {getStageIndicators(item)}
-                            </div>
-                          </td>
-
-                          {/* Progress Bar */}
-                          <td className="py-3.5 px-4 text-center">
-                            <div className="inline-flex justify-center w-full">
-                              {getProgressBar(item.overall_percentage || 0)}
-                            </div>
-                          </td>
-
-                          {/* Badge Overall */}
-                          <td className="py-3.5 px-4 text-center">
-                            <div className="inline-flex justify-center">
-                              {getStatusBadge(item.overall_status)}
-                            </div>
-                          </td>
-
-                          {/* Dispatch reference */}
-                          <td className="py-3.5 px-4">
-                            <div className="font-bold text-slate-700">{item.materials?.material_code || "N/A"}</div>
-                            <div className="text-[10px] font-bold text-teal-750 uppercase mt-0.5">{item.materials?.capacity || ""}</div>
-                          </td>
-
-                          {/* Sync Date */}
-                          <td className="py-3.5 px-4 text-slate-500 whitespace-nowrap">
-                            {formatDate(item.completed_at || item.started_at || item.created_at)}
-                          </td>
-
-                          {/* Actions */}
-                          <td className="py-3.5 px-4 pr-6 text-right whitespace-nowrap">
-                            <button
-                              onClick={() => router.push(`/installations/${item.id}`)}
-                              className="inline-flex items-center gap-1.5 text-xs font-black text-teal-650 bg-teal-550/5 border border-teal-100 px-3 py-1.5 rounded-lg hover:bg-teal-600 hover:text-white transition-all shadow-sm group cursor-pointer"
-                            >
-                              <Eye className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />
-                              Cockpit Panel
-                            </button>
-                          </td>
-
-                        </tr>
-                      );
-                    })
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Grid Pagination Footer Panel styled like Inventory Hub */}
-            {totalPages > 1 && (
-              <div className="p-5 border-t border-slate-100 bg-slate-50 flex items-center justify-between select-none">
-                <span className="text-xs font-bold text-slate-500">
-                  Showing <span className="text-slate-800">{(currentPage - 1) * itemsPerPage + 1}</span> to <span className="text-slate-800">{Math.min(currentPage * itemsPerPage, filteredInstallations.length)}</span> of <span className="text-slate-800">{filteredInstallations.length}</span> schools matching
-                </span>
-
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
-                    className="p-2 rounded-lg bg-white border border-slate-200 shadow-sm text-slate-500 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
-                  >
-                    <ChevronLeft className="w-4 h-4" />
-                  </button>
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`px-3.5 py-1.5 rounded-lg border font-bold text-xs transition-all cursor-pointer ${
-                        currentPage === page
-                          ? "bg-teal-650 border-teal-650 text-white shadow-sm"
-                          : "bg-white border-slate-200 text-slate-650 hover:bg-slate-50"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                  <button
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
-                    className="p-2 rounded-lg bg-white border border-slate-200 shadow-sm text-slate-500 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors cursor-pointer"
-                  >
-                    <ChevronRight className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            )}
-
-          </div>
+          {/* ── DashboardFilter Component ── */}
+          <DashboardFilter installations={installations} dataLoading={dataLoading} />
+          
 
         </div>
       </main>

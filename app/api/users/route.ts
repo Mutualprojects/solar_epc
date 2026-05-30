@@ -85,7 +85,10 @@ export async function PATCH(request: Request) {
     }
 
     const body = await request.json();
-    const { full_name, phone, designation, district, profile_photo, password, employee_id, email, is_active } = body;
+    const { id, full_name, phone, designation, district, profile_photo, password, employee_id, email, is_active, role_id } = body;
+
+    // If super admin and a specific user id is provided, update that user. Otherwise update own profile.
+    const targetUserId = (decoded.role === 'Super Admin' && id) ? id : decoded.userId;
 
     const updates: any = {};
     if (full_name !== undefined) updates.full_name = full_name;
@@ -96,6 +99,7 @@ export async function PATCH(request: Request) {
     if (employee_id !== undefined) updates.employee_id = employee_id;
     if (email !== undefined) updates.email = email;
     if (is_active !== undefined) updates.is_active = is_active;
+    if (role_id !== undefined && decoded.role === 'Super Admin') updates.role_id = role_id;
 
     if (password) {
       updates.password = await bcrypt.hash(password, 10);
@@ -103,7 +107,7 @@ export async function PATCH(request: Request) {
 
     const { data, error } = await getUsersTable()
       .update(updates)
-      .eq('id', decoded.userId)
+      .eq('id', targetUserId)
       .select('*, roles(role_name)');
 
     if (error) {

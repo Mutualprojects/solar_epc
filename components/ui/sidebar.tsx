@@ -16,7 +16,8 @@ import {
   Package,
   Warehouse,
   LayoutDashboard,
-  Sun
+  Sun,
+  Users
 } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import Link from "next/link";
@@ -81,6 +82,19 @@ const staggerVariants = {
 export function SessionNavBar() {
   const pathname = usePathname();
   const [user, setUser] = useState<{ full_name?: string; email?: string; profile_photo?: string } | null>(null);
+  const [activePath, setActivePath] = useState("");
+
+  useEffect(() => {
+    if (pathname) {
+      setActivePath(pathname);
+    } else if (typeof window !== "undefined") {
+      setActivePath(window.location.pathname);
+    }
+  }, [pathname]);
+
+  const isActiveRoute = (route: string) => {
+    return activePath.includes(route);
+  };
 
   useEffect(() => {
     try {
@@ -158,12 +172,12 @@ export function SessionNavBar() {
                       href="/dashboard/superadmin"
                       className={cn(
                         "group flex h-11 w-full flex-row items-center rounded-xl px-3 py-2 transition-all font-semibold",
-                        pathname?.includes("dashboard") 
+                        isActiveRoute("dashboard") 
                           ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100" 
                           : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600 border border-transparent"
                       )}
                     >
-                      <LayoutDashboard className={cn("h-5 w-5 shrink-0 transition-colors", pathname?.includes("dashboard") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
+                      <LayoutDashboard className={cn("h-5 w-5 shrink-0 transition-colors", isActiveRoute("dashboard") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
                       <li className="overflow-hidden">
                         <p className="ml-3 text-[14px] whitespace-nowrap">Overview</p>
                       </li>
@@ -173,12 +187,12 @@ export function SessionNavBar() {
                       href="/schools"
                       className={cn(
                         "group flex h-11 w-full flex-row items-center rounded-xl px-3 py-2 transition-all font-semibold",
-                        pathname?.includes("schools") 
+                        isActiveRoute("schools") 
                           ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100" 
                           : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600 border border-transparent"
                       )}
                     >
-                      <School className={cn("h-5 w-5 shrink-0 transition-colors", pathname?.includes("schools") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
+                      <School className={cn("h-5 w-5 shrink-0 transition-colors", isActiveRoute("schools") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
                       <li className="overflow-hidden">
                         <p className="ml-3 text-[14px] whitespace-nowrap">Schools</p>
                       </li>
@@ -188,12 +202,12 @@ export function SessionNavBar() {
                       href="/warehouse"
                       className={cn(
                         "group flex h-11 w-full flex-row items-center rounded-xl px-3 py-2 transition-all font-semibold",
-                        pathname?.includes("warehouse") 
+                        isActiveRoute("warehouse") 
                           ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100" 
                           : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600 border border-transparent"
                       )}
                     >
-                      <Warehouse className={cn("h-5 w-5 shrink-0 transition-colors", pathname?.includes("warehouse") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
+                      <Warehouse className={cn("h-5 w-5 shrink-0 transition-colors", isActiveRoute("warehouse") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
                       <li className="overflow-hidden">
                         <p className="ml-3 text-[14px] whitespace-nowrap">Warehouse</p>
                       </li>
@@ -205,12 +219,12 @@ export function SessionNavBar() {
                       href="/installations"
                       className={cn(
                         "group flex h-11 w-full flex-row items-center rounded-xl px-3 py-2 transition-all font-semibold",
-                        pathname?.includes("installations") 
+                        isActiveRoute("installations") 
                           ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100" 
                           : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600 border border-transparent"
                       )}
                     >
-                      <Wrench className={cn("h-5 w-5 shrink-0 transition-colors", pathname?.includes("installations") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
+                      <Wrench className={cn("h-5 w-5 shrink-0 transition-colors", isActiveRoute("installations") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
                       <li className="overflow-hidden">
                         <p className="ml-3 text-[14px] whitespace-nowrap">Installations</p>
                       </li>
@@ -220,14 +234,29 @@ export function SessionNavBar() {
                       href="/inventory"
                       className={cn(
                         "group flex h-11 w-full flex-row items-center rounded-xl px-3 py-2 transition-all font-semibold",
-                        pathname?.includes("inventory") 
+                        isActiveRoute("inventory") 
                           ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100" 
                           : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600 border border-transparent"
                       )}
                     >
-                      <Package className={cn("h-5 w-5 shrink-0 transition-colors", pathname?.includes("inventory") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
+                      <Package className={cn("h-5 w-5 shrink-0 transition-colors", isActiveRoute("inventory") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
                       <li className="overflow-hidden">
                         <p className="ml-3 text-[14px] whitespace-nowrap">Material</p>
+                      </li>
+                    </Link>
+
+                    <Link
+                      href="/users"
+                      className={cn(
+                        "group flex h-11 w-full flex-row items-center rounded-xl px-3 py-2 transition-all font-semibold",
+                        isActiveRoute("users") 
+                          ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100" 
+                          : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600 border border-transparent"
+                      )}
+                    >
+                      <Users className={cn("h-5 w-5 shrink-0 transition-colors", isActiveRoute("users") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
+                      <li className="overflow-hidden">
+                        <p className="ml-3 text-[14px] whitespace-nowrap">Users</p>
                       </li>
                     </Link>
 
@@ -235,12 +264,12 @@ export function SessionNavBar() {
                       href="/profile"
                       className={cn(
                         "group flex h-11 w-full flex-row items-center rounded-xl px-3 py-2 transition-all font-semibold",
-                        pathname === "/profile"
+                        isActiveRoute("profile")
                           ? "bg-emerald-50 text-emerald-700 shadow-sm border border-emerald-100" 
                           : "text-slate-500 hover:bg-slate-50 hover:text-emerald-600 border border-transparent"
                       )}
                     >
-                      <UserCircle className={cn("h-5 w-5 shrink-0 transition-colors", pathname === "/profile" ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
+                      <UserCircle className={cn("h-5 w-5 shrink-0 transition-colors", isActiveRoute("profile") ? "text-emerald-600" : "text-slate-400 group-hover:text-emerald-500")} />
                       <li className="overflow-hidden">
                         <p className="ml-3 text-[14px] whitespace-nowrap">Profile</p>
                       </li>

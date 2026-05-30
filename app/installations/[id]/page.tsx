@@ -815,7 +815,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
                     </div>
 
                     <h2 className="text-sm font-black text-slate-850 uppercase tracking-tight leading-tight">
-                      {inst.schools?.kgbv_name || "UNKNOWN SCHOOL"}
+                      {inst.schools?.kgbv_name || "UNKNOWN SCHOOL"} | {inst.schools?.no_of_systems ?? 0}
                     </h2>
                     <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mt-1">
                       <MapPin className="w-3.5 h-3.5 text-slate-350" /> {inst.schools?.district || "N/A"}{inst.schools?.pincode ? ` • ${inst.schools.pincode}` : ''}

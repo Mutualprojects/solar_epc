@@ -36,6 +36,7 @@ interface School {
   contact_number?: string;
   created_at?: string;
   is_active?: boolean;
+  no_of_systems?: number;
 }
 
 export default function SchoolsPage() {
@@ -45,6 +46,7 @@ export default function SchoolsPage() {
 
   // Data States
   const [schools, setSchools] = useState<School[]>([]);
+  const [installations, setInstallations] = useState<any[]>([]);
   const [districts, setDistricts] = useState<string[]>([]);
   const [selectedSchoolDetails, setSelectedSchoolDetails] = useState<School | null>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -96,18 +98,26 @@ export default function SchoolsPage() {
   const fetchSchools = async () => {
     try {
       setLoading(true);
-      const res = await fetch("/api/schools");
-      const data = await res.json();
+      const [resSchools, resInstallations] = await Promise.all([
+        fetch("/api/schools"),
+        fetch("/api/installations")
+      ]);
+      const dataSchools = await resSchools.json();
+      const dataInstallations = await resInstallations.json();
 
-      if (data.success) {
-        setSchools(data.data || []);
+      if (dataSchools.success) {
+        setSchools(dataSchools.data || []);
         // Extract unique districts (converted to UPPERCASE to guarantee consistency)
         const uniqueDistricts: string[] = Array.from(
-          new Set((data.data || []).map((s: School) => s.district?.toUpperCase()).filter(Boolean))
+          new Set((dataSchools.data || []).map((s: School) => s.district?.toUpperCase()).filter(Boolean))
         );
         setDistricts(uniqueDistricts);
       } else {
-        showToast("error", data.error || "Failed to fetch schools.");
+        showToast("error", dataSchools.error || "Failed to fetch schools.");
+      }
+
+      if (dataInstallations.success) {
+        setInstallations(dataInstallations.data || []);
       }
     } catch (err: any) {
       showToast("error", err.message || "An unexpected error occurred.");
@@ -134,23 +144,74 @@ export default function SchoolsPage() {
     return s.district?.toUpperCase() === selectedDistrict.toUpperCase();
   });
 
-  // Filter the final display schools list
-  const filteredSchools = schools.filter(s => {
-    // A. Matches District Dropdown (if selected)
-    const matchesDistrict = !selectedDistrict || s.district?.toUpperCase() === selectedDistrict.toUpperCase();
+  // Filter and sort the final display schools list
+  const filteredSchools = schools
+    .filter(s => {
+      // A. Matches District Dropdown (if selected)
+      const matchesDistrict = !selectedDistrict || s.district?.toUpperCase() === selectedDistrict.toUpperCase();
 
-    // B. Matches School Dropdown (if selected)
-    const matchesSchoolId = !selectedSchoolId || s.id === selectedSchoolId;
+      // B. Matches School Dropdown (if selected)
+      const matchesSchoolId = !selectedSchoolId || s.id === selectedSchoolId;
 
-    // C. Matches Search Query (Name or ID or Pincode)
-    const search = searchTerm.toLowerCase();
-    const name = s.kgbv_name?.toLowerCase() || "";
-    const sid = s.school_id?.toLowerCase() || "";
-    const pin = (s.pin_code || "").toLowerCase();
-    const matchesSearch = !searchTerm || name.includes(search) || sid.includes(search) || pin.includes(search);
+      // C. Matches Search Query (Name or ID or Pincode)
+      const search = searchTerm.toLowerCase();
+      const name = s.kgbv_name?.toLowerCase() || "";
+      const sid = s.school_id?.toLowerCase() || "";
+      const pin = (s.pin_code || "").toLowerCase();
+      const matchesSearch = !searchTerm || name.includes(search) || sid.includes(search) || pin.includes(search);
 
-    return matchesDistrict && matchesSchoolId && matchesSearch;
-  });
+      return matchesDistrict && matchesSchoolId && matchesSearch;
+    })
+    .sort((a, b) => {
+      const getPriority = (schoolId: string) => {
+        const inst = installations.find(i => i.school_id === schoolId);
+        if (!inst) return 3; // Default to Pending (priority 3)
+
+        // 1. If overall_status is present, map it
+        if (inst.overall_status) {
+          const status = inst.overall_status.toLowerCase();
+          if (status === "completed") return 1;
+          if (status === "in progress") return 2;
+          if (status === "pending") return 3;
+        }
+
+        // 2. Fallback to calculating from subsystem statuses
+        const subStatuses = [
+          inst.tank_status || "Pending",
+          inst.mms_status || "Pending",
+          inst.collectors_status || "Pending",
+          inst.plumbing_status || "Pending"
+        ].map(s => s.toLowerCase());
+
+        const subPercentages = [
+          inst.tank_percentage || 0,
+          inst.mms_percentage || 0,
+          inst.collectors_percentage || 0,
+          inst.plumbing_percentage || 0
+        ];
+
+        let completedCount = 0;
+        for (let i = 0; i < 4; i++) {
+          if (subStatuses[i] === "completed" || subPercentages[i] > 0) {
+            completedCount++;
+          }
+        }
+
+        if (completedCount === 4) return 1;
+        if (completedCount > 0) return 2;
+        return 3;
+      };
+
+      const priorityA = getPriority(a.id);
+      const priorityB = getPriority(b.id);
+
+      if (priorityA !== priorityB) {
+        return priorityA - priorityB;
+      }
+      
+      // Secondary sort: keep alphabetical order by school name
+      return a.kgbv_name.localeCompare(b.kgbv_name);
+    });
 
   // 3. Pagination Logic
   const totalItems = filteredSchools.length;
@@ -171,6 +232,37 @@ export default function SchoolsPage() {
     setSelectedDistrict("");
     setSelectedSchoolId("");
     handleCloseDrawer();
+  };
+
+  const renderInstallationStatusIndicators = (schoolId: string) => {
+    const inst = installations.find(i => i.school_id === schoolId);
+    const stages = [
+      { label: "T", status: inst?.tank_status || "Pending", title: "Tank" },
+      { label: "M", status: inst?.mms_status || "Pending", title: "MMS" },
+      { label: "C", status: inst?.collectors_status || "Pending", title: "Collectors" },
+      { label: "P", status: inst?.plumbing_status || "Pending", title: "Plumbing" },
+    ];
+
+    return (
+      <div className="flex gap-1 items-center select-none" onClick={(e) => e.stopPropagation()}>
+        {stages.map((stage) => {
+          const isCompleted = stage.status?.toLowerCase() === "completed";
+          return (
+            <span
+              key={stage.label}
+              title={`${stage.title}: ${stage.status}`}
+              className={`w-5 h-5 rounded-md text-[9px] font-black flex items-center justify-center border transition-all ${
+                isCompleted
+                  ? "bg-emerald-500 border-emerald-600 text-white shadow-sm"
+                  : "bg-slate-50 border-slate-200 text-slate-400"
+              }`}
+            >
+              {stage.label}
+            </span>
+          );
+        })}
+      </div>
+    );
   };
 
   return (
@@ -345,8 +437,8 @@ export default function SchoolsPage() {
                       <div className="w-8 h-8 rounded-lg bg-emerald-50 border border-emerald-100 flex items-center justify-center text-emerald-600 shrink-0 font-black text-xs uppercase shadow-sm">
                         {s.kgbv_name.charAt(0)}
                       </div>
-                      <span className="text-[9px] font-black text-slate-450 uppercase tracking-widest bg-slate-50 border border-slate-200/50 px-2 py-0.5 rounded">
-                        {s.school_id.toUpperCase()}
+                      <span className="text-[9px] font-black text-emerald-650 uppercase tracking-widest bg-emerald-50/50 border border-emerald-100/50 px-2 py-0.5 rounded shadow-sm">
+                        Systems: {s.no_of_systems || 0}
                       </span>
                     </div>
 
@@ -362,10 +454,7 @@ export default function SchoolsPage() {
                   </div>
 
                   <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-[10px] font-bold">
-                    <div className="flex items-center gap-1 text-slate-400 uppercase">
-                      <Pin className="w-3 h-3 text-slate-350" />
-                      <span>PIN: {s.pin_code || "N/A"}</span>
-                    </div>
+                    {renderInstallationStatusIndicators(s.id)}
                     <span className="text-emerald-600 font-extrabold uppercase text-[9px] bg-emerald-50 border border-emerald-100/50 px-2 py-0.5 rounded-md group-hover:bg-emerald-600 group-hover:text-white group-hover:border-emerald-600 transition-all">
                       Active
                     </span>
@@ -391,16 +480,15 @@ export default function SchoolsPage() {
                         {s.kgbv_name.toUpperCase()}
                       </h4>
                       <div className="flex flex-wrap items-center gap-x-3.5 gap-y-1 mt-1 text-[10px] font-bold text-slate-455 uppercase">
-                        <span className="inline-flex px-1.5 py-0.5 bg-slate-50 border border-slate-200/55 rounded font-black text-slate-500">
-                          ID: {s.school_id.toUpperCase()}
+                        <span className="inline-flex px-1.5 py-0.5 bg-emerald-50 border border-emerald-100 rounded font-black text-emerald-700 shadow-sm">
+                          Systems: {s.no_of_systems || 0}
                         </span>
                         <span className="flex items-center gap-1 text-slate-500">
                           <MapPin className="w-3 h-3 text-slate-400" />
                           {s.district.toUpperCase()}
                         </span>
                         <span className="flex items-center gap-1 text-slate-500">
-                          <Pin className="w-3 h-3 text-slate-400" />
-                          PIN: {s.pin_code || "N/A"}
+                          {renderInstallationStatusIndicators(s.id)}
                         </span>
                       </div>
                     </div>
@@ -421,9 +509,9 @@ export default function SchoolsPage() {
                   <thead>
                     <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-wider font-black border-b border-slate-150 select-none">
                       <th className="py-3 px-4 pl-6">School Name</th>
-                      <th className="py-3 px-4">School ID</th>
+                      <th className="py-3 px-4">Systems</th>
                       <th className="py-3 px-4">District</th>
-                      <th className="py-3 px-4">Pincode</th>
+                      <th className="py-3 px-4">Installation Status</th>
                       <th className="py-3 px-4 pr-6 text-right">Status</th>
                     </tr>
                   </thead>
@@ -438,15 +526,15 @@ export default function SchoolsPage() {
                           <span className="font-extrabold text-slate-800 uppercase">{s.kgbv_name.toUpperCase()}</span>
                         </td>
                         <td className="py-3 px-4">
-                          <span className="inline-flex px-2 py-0.5 bg-slate-50 text-slate-600 border border-slate-250/50 rounded-md text-[9px] font-black uppercase tracking-wider">
-                            {s.school_id.toUpperCase()}
+                          <span className="inline-flex px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-[10px] font-black uppercase tracking-wider">
+                            {s.no_of_systems || 0}
                           </span>
                         </td>
                         <td className="py-3 px-4">
                           <span className="text-slate-600 uppercase font-extrabold">{s.district.toUpperCase()}</span>
                         </td>
                         <td className="py-3 px-4 text-slate-500">
-                          <span>{s.pin_code || "N/A"}</span>
+                          {renderInstallationStatusIndicators(s.id)}
                         </td>
                         <td className="py-3 px-4 pr-6 text-right">
                           <span className="inline-flex px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-[9px] font-black uppercase">
@@ -485,8 +573,8 @@ export default function SchoolsPage() {
                           className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm hover:border-emerald-300 hover:shadow-md transition-all flex flex-col gap-2 group cursor-pointer"
                         >
                           <div className="flex justify-between items-start">
-                            <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-50 border border-slate-200/50 px-1.5 py-0.5 rounded">
-                              {school.school_id.toUpperCase()}
+                            <span className="text-[9px] font-black text-emerald-650 uppercase tracking-widest bg-emerald-50/50 border border-emerald-100/50 px-1.5 py-0.5 rounded shadow-sm">
+                              Systems: {school.no_of_systems || 0}
                             </span>
                             <span className="text-[9px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full uppercase shrink-0">
                               Active
@@ -496,10 +584,7 @@ export default function SchoolsPage() {
                             {school.kgbv_name.toUpperCase()}
                           </h5>
                           <div className="flex items-center justify-between mt-1 text-[9px] font-bold text-slate-450 uppercase border-t border-slate-50 pt-2">
-                            <span className="flex items-center gap-1 text-slate-500">
-                              <Pin className="w-3 h-3 text-slate-400" />
-                              {school.pin_code || "N/A"}
-                            </span>
+                            {renderInstallationStatusIndicators(school.id)}
                           </div>
                         </div>
                       ))}
@@ -606,8 +691,8 @@ export default function SchoolsPage() {
                       {selectedSchoolDetails.kgbv_name.toUpperCase()}
                     </h4>
                     <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="inline-flex px-2 py-0.5 bg-slate-100 text-slate-500 border border-slate-200 rounded font-black text-[9px] uppercase tracking-wider">
-                        ID: {selectedSchoolDetails.school_id.toUpperCase()}
+                      <span className="inline-flex px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded font-black text-[9px] uppercase tracking-wider shadow-sm">
+                        Systems: {selectedSchoolDetails.no_of_systems || 0}
                       </span>
                       <span className="inline-flex px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-[9px] font-black uppercase tracking-wider">
                         {selectedSchoolDetails.is_active !== false ? "Active Electrification" : "Inactive"}
@@ -615,6 +700,45 @@ export default function SchoolsPage() {
                     </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Installation Status Section */}
+              <h5 className="text-[10px] font-black text-slate-400 uppercase tracking-widest border-b border-slate-200 pb-2 shrink-0">Installation Status</h5>
+              <div className="flex flex-col gap-3 shrink-0">
+                {(() => {
+                  const inst = installations.find(i => i.school_id === selectedSchoolDetails.id);
+                  const stages = [
+                    { name: "Tank", status: inst?.tank_status || "Pending", percentage: inst?.tank_percentage || 0 },
+                    { name: "MMS", status: inst?.mms_status || "Pending", percentage: inst?.mms_percentage || 0 },
+                    { name: "Collectors", status: inst?.collectors_status || "Pending", percentage: inst?.collectors_percentage || 0 },
+                    { name: "Plumbing", status: inst?.plumbing_status || "Pending", percentage: inst?.plumbing_percentage || 0 }
+                  ];
+
+                  return (
+                    <div className="grid grid-cols-2 gap-3">
+                      {stages.map((stage) => {
+                        const isCompleted = stage.status.toLowerCase() === "completed" || stage.percentage > 0;
+                        return (
+                          <div key={stage.name} className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-sm hover:border-slate-300 transition-colors flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-2.5 min-w-0">
+                              {isCompleted ? (
+                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse shrink-0"></span>
+                              ) : (
+                                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0"></span>
+                              )}
+                              <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">
+                                {stage.name}
+                              </span>
+                            </div>
+                            <span className={`text-[10px] font-black uppercase tracking-wider shrink-0 ${isCompleted ? "text-emerald-600" : "text-slate-400"}`}>
+                              {isCompleted ? "Completed" : "Pending"}
+                            </span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
               </div>
 
               {/* Title label */}

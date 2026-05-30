@@ -448,7 +448,7 @@ export default function InstallationsPage() {
 
                       <div>
                         <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight line-clamp-1 group-hover:text-emerald-700 transition-colors">
-                          {inst.schools?.kgbv_name || "UNKNOWN SCHOOL"}
+                          {inst.schools?.kgbv_name || "UNKNOWN SCHOOL"} | {inst.schools?.no_of_systems ?? 0}
                         </h4>
                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1 mt-0.5">
                           <MapPin className="w-3 h-3 text-slate-350" /> {inst.schools?.district || "N/A"}{inst.schools?.pincode ? ` • ${inst.schools.pincode}` : ''}
@@ -524,7 +524,7 @@ export default function InstallationsPage() {
                           {inst.installation_code}
                         </td>
                         <td className="px-6 py-4.5 whitespace-nowrap font-extrabold text-slate-700 uppercase">
-                          {inst.schools?.kgbv_name || "N/A"}
+                          {inst.schools?.kgbv_name || "N/A"} | {inst.schools?.no_of_systems ?? 0}
                         </td>
                         <td className="px-6 py-4.5 whitespace-nowrap uppercase text-slate-500">
                           {inst.schools?.district || "N/A"}{inst.schools?.pincode ? ` • ${inst.schools.pincode}` : ''}
