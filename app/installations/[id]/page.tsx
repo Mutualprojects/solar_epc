@@ -652,18 +652,18 @@ export default function InstallationDetailPage({ params }: PageProps) {
     onUpload: (section: "tank" | "mms" | "collectors" | "plumbing") => void,
     onSave: (section: "tank" | "mms" | "collectors" | "plumbing") => void
   ) => {
+    // isLocked = ONLY used for visual styling, never to hide Save button
     const isLocked = status === "Completed";
     const isInProgress = status === "In Progress";
     const isBeyondApplicable = activeSystem > systemCount;
 
-    // Badge config per status
-    const badgeConfig = {
-      Completed:   { label: "✓ Completed",  cls: "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm" },
+    const badgeConfig: Record<string, { label: string; cls: string }> = {
+      "Completed":   { label: "✓ Completed",   cls: "bg-emerald-50 border-emerald-300 text-emerald-700 shadow-sm" },
       "In Progress": { label: "In Progress",  cls: "bg-amber-50 border-amber-300 text-amber-700 shadow-sm" },
-      Suspended:   { label: "Suspended",    cls: "bg-rose-50 border-rose-300 text-rose-700 shadow-sm" },
-      Pending:     { label: "Pending",      cls: "bg-slate-50 border-slate-200 text-slate-500" },
-    } as const;
-    const badge = badgeConfig[status as keyof typeof badgeConfig] ?? badgeConfig.Pending;
+      "Suspended":   { label: "Suspended",     cls: "bg-rose-50 border-rose-300 text-rose-700 shadow-sm" },
+      "Pending":     { label: "Pending",       cls: "bg-slate-50 border-slate-200 text-slate-500" },
+    };
+    const badge = badgeConfig[status] ?? badgeConfig["Pending"];
 
     return (
       <div
@@ -744,46 +744,38 @@ export default function InstallationDetailPage({ params }: PageProps) {
               <>
                 {/* Main Content Grid */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Remarks Section */}
+                  {/* Remarks - always editable */}
                   <div className="flex flex-col gap-2">
                     <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-wider">
                       Stage Remarks
                     </label>
-                    {isLocked ? (
-                      <div className="bg-emerald-50/50 border border-emerald-200/50 rounded-xl p-3 md:p-4 text-xs md:text-sm font-semibold text-slate-700 min-h-[90px] md:min-h-[100px] overflow-y-auto">
-                        {remarks || "No remarks entered."}
-                      </div>
-                    ) : (
-                      <textarea
-                        value={remarks}
-                        onChange={(e) => onRemarkChange(e.target.value)}
-                        placeholder={`Enter ${stageName.toLowerCase()} remarks...`}
-                        className="bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 rounded-xl p-2.5 md:p-3 text-xs md:text-sm font-medium text-slate-700 outline-none min-h-[90px] md:min-h-[100px] placeholder:text-slate-400 transition-all resize-none"
-                      />
-                    )}
+                    <textarea
+                      value={remarks}
+                      onChange={(e) => onRemarkChange(e.target.value)}
+                      placeholder={`Enter ${stageName.toLowerCase()} remarks...`}
+                      className="bg-slate-50 border border-slate-200 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 rounded-xl p-2.5 md:p-3 text-xs md:text-sm font-medium text-slate-700 outline-none min-h-[90px] md:min-h-[100px] placeholder:text-slate-400 transition-all resize-none"
+                    />
                   </div>
 
-                  {/* Images Section */}
+                  {/* Images - always allow upload */}
                   <div className="flex flex-col gap-2">
                     <div className="flex items-center justify-between gap-2">
                       <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-wider">
                         Verification Images ({images.length + pendingFiles.length})
                       </label>
-                      {!isLocked && (
-                        <button
-                          type="button"
-                          onClick={() => fileRef.current?.click()}
-                          disabled={uploadingSection === sectionKey}
-                          className="px-2 md:px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 border border-emerald-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center gap-1 cursor-pointer"
-                        >
-                          {uploadingSection === sectionKey ? (
-                            <Loader2 className="w-3 h-3 animate-spin" />
-                          ) : (
-                            <Camera className="w-3 h-3" />
-                          )}
-                          <span className="hidden xs:inline">Upload</span>
-                        </button>
-                      )}
+                      <button
+                        type="button"
+                        onClick={() => fileRef.current?.click()}
+                        disabled={uploadingSection === sectionKey}
+                        className="px-2 md:px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 border border-emerald-700 text-white text-[8px] md:text-[9px] font-black uppercase tracking-wider rounded-lg transition-all flex items-center gap-1 cursor-pointer"
+                      >
+                        {uploadingSection === sectionKey ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Camera className="w-3 h-3" />
+                        )}
+                        <span className="hidden xs:inline">Upload</span>
+                      </button>
                       <input
                         type="file"
                         ref={fileRef}
@@ -793,69 +785,49 @@ export default function InstallationDetailPage({ params }: PageProps) {
                         accept="image/*"
                       />
                     </div>
-
-                    {/* Image Gallery */}
                     <div className="bg-slate-50/70 border border-slate-200 rounded-xl p-2.5 md:p-3 min-h-[90px] md:min-h-[100px] flex flex-wrap gap-2 items-start content-start overflow-y-auto">
-                      {renderImageGallery(images, pendingFiles, isLocked, sectionKey)}
+                      {renderImageGallery(images, pendingFiles, false, sectionKey)}
                     </div>
                   </div>
                 </div>
 
-                {/* Status & Save Row */}
+                {/* Status & Save Row — ALWAYS VISIBLE */}
                 <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-3 pt-2 border-t border-slate-100">
-                  {isLocked ? (
-                    /* Completed: show status + unlock button */
-                    <div className="flex items-center justify-between w-full gap-3">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-emerald-600" />
-                        <span className="text-[10px] font-black text-emerald-700 uppercase tracking-wider">
-                          Stage Completed — System {activeSystem}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => onStatusChange("In Progress")}
-                        className="px-3 py-1.5 bg-slate-100 hover:bg-amber-50 hover:border-amber-300 text-slate-600 hover:text-amber-700 border border-slate-200 font-black text-[8px] uppercase tracking-wider rounded-lg transition-all flex items-center gap-1 cursor-pointer"
-                      >
-                        <Edit3 className="w-3 h-3" />
-                        Unlock & Edit
-                      </button>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="flex items-center gap-2">
-                        <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">
-                          Status:
-                        </label>
-                        <select
-                          value={status}
-                          onChange={(e) => {
-                            onStatusChange(e.target.value);
-                          }}
-                          className="bg-slate-50 border border-slate-300 hover:border-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 rounded-lg py-1.5 md:py-2 px-2.5 md:px-3 text-xs md:text-sm font-bold text-slate-700 outline-none uppercase transition-all cursor-pointer"
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="In Progress">In Progress</option>
-                          <option value="Completed">Completed</option>
-                          <option value="Suspended">Suspended</option>
-                        </select>
-                      </div>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[8px] md:text-[9px] font-black text-slate-400 uppercase tracking-wider whitespace-nowrap">
+                      Status:
+                    </label>
+                    <select
+                      value={status}
+                      onChange={(e) => onStatusChange(e.target.value)}
+                      className={`border hover:border-slate-400 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/10 rounded-lg py-1.5 md:py-2 px-2.5 md:px-3 text-xs md:text-sm font-bold outline-none uppercase transition-all cursor-pointer ${
+                        isLocked
+                          ? "bg-emerald-50 border-emerald-300 text-emerald-700"
+                          : isInProgress
+                          ? "bg-amber-50 border-amber-200 text-amber-700"
+                          : "bg-slate-50 border-slate-300 text-slate-700"
+                      }`}
+                    >
+                      <option value="Pending">Pending</option>
+                      <option value="In Progress">In Progress</option>
+                      <option value="Completed">Completed</option>
+                      <option value="Suspended">Suspended</option>
+                    </select>
+                  </div>
 
-                      <button
-                        type="button"
-                        onClick={() => onSave(sectionKey)}
-                        disabled={savingSection === sectionKey}
-                        className="px-4 py-2 md:py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-black text-[9px] md:text-[10px] uppercase tracking-wider rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
-                      >
-                        {savingSection === sectionKey ? (
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                        ) : (
-                          <Save className="w-4 h-4" />
-                        )}
-                        Save Stage {stageNum}
-                      </button>
-                    </>
-                  )}
+                  <button
+                    type="button"
+                    onClick={() => onSave(sectionKey)}
+                    disabled={savingSection === sectionKey}
+                    className="px-4 py-2 md:py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-black text-[9px] md:text-[10px] uppercase tracking-wider rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
+                  >
+                    {savingSection === sectionKey ? (
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
+                    Save Stage {stageNum}
+                  </button>
                 </div>
               </>
             )}
