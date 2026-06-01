@@ -14,6 +14,7 @@ import {
   Users,
   X,
   Menu,
+  Activity,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -35,6 +36,7 @@ const NAV_ITEMS = [
   { href: "/inventory", label: "Material", Icon: Package, match: "inventory" },
   { href: "/users", label: "Personnel", Icon: Users, match: "users" },
   { href: "/profile", label: "Profile", Icon: UserCircle, match: "profile" },
+  { href: "/activity", label: "Activity", Icon: Activity, match: "activity" },
 ];
 
 // ─── Single NavLink ─────────────────────────────────────────────────────────────

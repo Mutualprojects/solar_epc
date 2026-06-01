@@ -13,6 +13,7 @@ import {
   User as UserIcon, LogOut
 } from "lucide-react";
 import Image from "next/image";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -703,6 +704,43 @@ export default function InventoryPage() {
     return matchesDistrict && matchesSearch && noExistingInventory;
   });
 
+  // KPIs & Chart Data
+  const getDispatchStats = () => {
+    let fullyDispatched = 0;
+    let partialDispatched = 0;
+    let pending = 0;
+
+    schools.forEach(school => {
+      const mat = materials.find(m => m.school_code === school.id);
+      if (!mat) {
+        pending++;
+        return;
+      }
+
+      // Heuristic: check if materials are dispatched
+      const hasTank = mat.tank && mat.tank > 0;
+      const hasMms = mat.mms && mat.mms > 0;
+      const hasColl = mat.collectors && mat.collectors > 0;
+      const hasPlumb = mat.plumbing && mat.plumbing > 0;
+
+      if (hasTank && hasMms && hasColl && hasPlumb) {
+        fullyDispatched++;
+      } else if (hasTank || hasMms || hasColl || hasPlumb) {
+        partialDispatched++;
+      } else {
+        pending++;
+      }
+    });
+
+    return [
+      { name: "Fully Dispatched", value: fullyDispatched, color: "#10b981" }, // emerald-500
+      { name: "Partial Dispatched", value: partialDispatched, color: "#f59e0b" }, // amber-500
+      { name: "Pending Materials", value: pending, color: "#f43f5e" } // rose-500
+    ];
+  };
+
+  const dispatchStats = getDispatchStats();
+
   return (
     <div className="h-screen w-full bg-[#f8fafc] flex font-['DM_Sans'] overflow-hidden">
       {/* ── SIDEBAR ── */}
@@ -847,6 +885,62 @@ export default function InventoryPage() {
               {/* TAB 1: INVENTORY LIST VIEW */}
               {activeTab === "list" && (
                 <div className="flex flex-col gap-4 animate-fadeIn">
+                  
+                  {/* KPI DASHBOARD */}
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Pie Chart Card */}
+                    <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm col-span-1 md:col-span-1 flex flex-col justify-between items-center min-h-[220px]">
+                      <h3 className="text-[10px] font-black uppercase text-slate-500 w-full text-left tracking-widest mb-1">Dispatch Overview</h3>
+                      <div className="w-full h-full flex-1 min-h-[160px]">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={dispatchStats}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={45}
+                              outerRadius={70}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {dispatchStats.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip 
+                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                              itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                            />
+                            <Legend 
+                              verticalAlign="bottom" 
+                              height={28} 
+                              iconType="circle"
+                              wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', paddingTop: '10px' }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+                    </div>
+
+                    {/* Stats Grid */}
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      {dispatchStats.map((stat, i) => (
+                        <div key={i} className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col justify-center min-h-[220px] relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-300">
+                          <div 
+                            className="absolute inset-0 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300" 
+                            style={{ backgroundColor: stat.color }}
+                          ></div>
+                          <div className="flex flex-col gap-2 relative z-10">
+                            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{stat.name}</span>
+                            <span className="text-5xl font-black text-slate-800">{stat.value}</span>
+                            <span className="text-xs font-bold mt-2" style={{ color: stat.color }}>
+                              {schools.length > 0 ? Math.round((stat.value / schools.length) * 100) : 0}% of Total Network
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
 
                   {/* Materials Grid / Table */}
                   {filteredMaterials.length === 0 ? (

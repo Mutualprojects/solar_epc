@@ -9,7 +9,8 @@ import {
   School as SchoolIcon, Search, SlidersHorizontal, Grid, List, Table, Kanban,
   ChevronLeft, ChevronRight, Loader2, Pin, MapPin,
   X, Check, Info, Sparkles, GraduationCap, User as UserIcon, LogOut,
-  Phone, Calendar, UserCheck, ShieldAlert
+  Phone, Calendar, UserCheck, ShieldAlert,
+  Database, Activity, Award, CheckCircle, AlertCircle
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -784,15 +785,27 @@ export default function SchoolsPage() {
                     <h4 className="text-base font-black text-slate-800 uppercase tracking-tight truncate">
                       {selectedSchoolDetails.kgbv_name.toUpperCase()}
                     </h4>
-                    <div className="flex flex-wrap items-center gap-2 mt-1">
-                      <span className="inline-flex px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded font-black text-[9px] uppercase tracking-wider shadow-sm">
-                        Systems: {selectedSchoolDetails.no_of_systems || 0}
-                      </span>
-                      <span className="inline-flex px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-full text-[9px] font-black uppercase tracking-wider">
-                        {selectedSchoolDetails.is_active !== false ? "Active Electrification" : "Inactive"}
-                      </span>
-                    </div>
                   </div>
+                </div>
+              </div>
+
+              {/* KPIs Grid */}
+              <div className="grid grid-cols-2 gap-3 shrink-0">
+                <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col items-center text-center hover:border-slate-300 transition-colors">
+                  <div className="w-8 h-8 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mb-2">
+                    <Database className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Systems</span>
+                  <span className="text-lg font-black text-slate-800">{selectedSchoolDetails.no_of_systems || 0}</span>
+                </div>
+                <div className="bg-white border border-slate-200 rounded-xl p-3 shadow-sm flex flex-col items-center text-center hover:border-slate-300 transition-colors">
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center mb-2 ${selectedSchoolDetails.is_active !== false ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"}`}>
+                    <Activity className="w-4 h-4" />
+                  </div>
+                  <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Site Status</span>
+                  <span className={`text-xs font-black uppercase mt-1 ${selectedSchoolDetails.is_active !== false ? "text-emerald-700" : "text-rose-700"}`}>
+                    {selectedSchoolDetails.is_active !== false ? "Active" : "Inactive"}
+                  </span>
                 </div>
               </div>
 
@@ -808,29 +821,87 @@ export default function SchoolsPage() {
                     { name: "Plumbing", status: inst?.plumbing_status || "Pending", percentage: inst?.plumbing_percentage || 0 }
                   ];
 
+                  const isOverallCompleted = inst?.overall_status === 'Completed';
+                  const hasCertificate = !!inst?.completion_certificate;
+
                   return (
-                    <div className="grid grid-cols-2 gap-3">
-                      {stages.map((stage) => {
-                        const isCompleted = stage.status.toLowerCase() === "completed" || stage.percentage > 0;
-                        return (
-                          <div key={stage.name} className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-sm hover:border-slate-300 transition-colors flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-2.5 min-w-0">
-                              {isCompleted ? (
-                                <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse shrink-0"></span>
-                              ) : (
-                                <span className="w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0"></span>
-                              )}
-                              <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">
-                                {stage.name}
+                    <>
+                      {/* Overall Progress */}
+                      {inst && (
+                        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 mb-1">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Overall Progress</span>
+                            <span className="text-xs font-black text-slate-800">{inst.overall_percentage || 0}%</span>
+                          </div>
+                          <div className="w-full bg-slate-200 rounded-full h-2 overflow-hidden">
+                            <div className="bg-emerald-500 h-full rounded-full transition-all" style={{ width: `${inst.overall_percentage || 0}%` }}></div>
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-2 gap-3">
+                        {stages.map((stage) => {
+                          const isCompleted = stage.status.toLowerCase() === "completed" || stage.percentage > 0;
+                          return (
+                            <div key={stage.name} className="bg-white border border-slate-200 px-3.5 py-2.5 rounded-xl shadow-sm hover:border-slate-300 transition-colors flex items-center justify-between gap-3">
+                              <div className="flex items-center gap-2.5 min-w-0">
+                                {isCompleted ? (
+                                  <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse shrink-0"></span>
+                                ) : (
+                                  <span className="w-2.5 h-2.5 rounded-full bg-slate-300 shrink-0"></span>
+                                )}
+                                <span className="text-xs font-black text-slate-800 uppercase tracking-tight truncate">
+                                  {stage.name}
+                                </span>
+                              </div>
+                              <span className={`text-[10px] font-black uppercase tracking-wider shrink-0 ${isCompleted ? "text-emerald-600" : "text-slate-400"}`}>
+                                {isCompleted ? "Completed" : "Pending"}
                               </span>
                             </div>
-                            <span className={`text-[10px] font-black uppercase tracking-wider shrink-0 ${isCompleted ? "text-emerald-600" : "text-slate-400"}`}>
-                              {isCompleted ? "Completed" : "Pending"}
-                            </span>
+                          );
+                        })}
+                      </div>
+
+                      {/* Certificate Upload Status if Installation Completed */}
+                      {isOverallCompleted && (
+                        <div className={`mt-2 p-4 rounded-xl border flex flex-col gap-3 shadow-sm ${hasCertificate ? "bg-emerald-50 border-emerald-200" : "bg-amber-50 border-amber-200"}`}>
+                          <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 min-w-0">
+                              <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${hasCertificate ? "bg-emerald-100 text-emerald-600" : "bg-amber-100 text-amber-600"}`}>
+                                <Award className="w-5 h-5" />
+                              </div>
+                              <div className="min-w-0">
+                                <p className={`text-[10px] font-black uppercase tracking-wider truncate ${hasCertificate ? "text-emerald-800" : "text-amber-800"}`}>
+                                  Completion Certificate
+                                </p>
+                                <p className={`text-[11px] font-bold mt-0.5 truncate ${hasCertificate ? "text-emerald-600" : "text-amber-700"}`}>
+                                  {hasCertificate ? "Official Document Uploaded" : "Missing / Pending Upload"}
+                                </p>
+                              </div>
+                            </div>
+                            {hasCertificate ? (
+                              <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+                            ) : (
+                              <AlertCircle className="w-5 h-5 text-amber-500 animate-pulse shrink-0" />
+                            )}
                           </div>
-                        );
-                      })}
-                    </div>
+                          
+                          {/* Image Preview */}
+                          {hasCertificate && (
+                            <div className="relative w-full h-[140px] rounded-lg overflow-hidden border border-emerald-200 shadow-sm bg-white mt-1 group">
+                              <img
+                                src={inst.completion_certificate.startsWith('https://') ? inst.completion_certificate : `/api/proxy-image?url=${encodeURIComponent(inst.completion_certificate)}`}
+                                alt="Completion Certificate"
+                                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).src = 'https://placehold.co/600x400/f8fafc/94a3b8?text=Image+Unavailable';
+                                }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </>
                   );
                 })()}
               </div>

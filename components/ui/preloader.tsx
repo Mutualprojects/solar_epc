@@ -64,7 +64,7 @@ export function Preloader() {
           <div className="absolute inset-0 bg-gradient-to-tr from-emerald-500/5 to-transparent"></div>
           
           <img
-            src="/robot-with-solar-panel.png"
+            src="/solar-energy-abstract-concept-illustration.png"
             alt="Solar Electrification Network"
             className="w-full h-full object-contain rounded-2xl transition-transform duration-700 hover:scale-105"
           />
