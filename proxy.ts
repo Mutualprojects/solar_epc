@@ -27,9 +27,9 @@ export function proxy(request: NextRequest) {
     request.nextUrl.hostname === 'localhost' ||
     request.nextUrl.hostname === '127.0.0.1';
 
-  // 3.5. Allow specific Vercel domain
+  // 3.5. Allow specific Vercel domain (both cross-origin and direct navigation)
   const origin = request.headers.get('origin') || request.headers.get('referer') || '';
-  const isAllowedDomain = origin.includes('solar-epc-ttfc.vercel.app');
+  const isAllowedDomain = origin.includes('solar-epc-ttfc.vercel.app') || request.nextUrl.hostname === 'solar-epc-ttfc.vercel.app';
 
   if (clientIp === allowedIp || isLocalhost || isAllowedDomain) {
     return NextResponse.next();
