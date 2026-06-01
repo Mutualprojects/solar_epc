@@ -512,42 +512,48 @@ export default function InstallationDetailPage({ params }: PageProps) {
 
       const stageUpdates: any = { id: inst.id };
 
+      const getStageScore = (sysArray: SystemState[]) => sysArray.reduce((acc, s) => {
+        if (s.status === "Completed") return acc + 1;
+        if (s.status === "In Progress") return acc + 0.5;
+        return acc;
+      }, 0);
+
+      const sysCount = Math.max(1, inst.schools?.no_of_systems || 1);
+      
+      const tankScore = section === "tank" ? getStageScore(latestSystems) : getStageScore(tankSystems);
+      const mmsScore = section === "mms" ? getStageScore(latestSystems) : getStageScore(mmsSystems);
+      const collScore = section === "collectors" ? getStageScore(latestSystems) : getStageScore(collSystems);
+      const plumbScore = section === "plumbing" ? getStageScore(latestSystems) : getStageScore(plumbSystems);
+
+      const totalScore = tankScore + mmsScore + collScore + plumbScore;
+      const totalSteps = 4 * sysCount;
+      const nextOverallPct = Math.round((totalScore / totalSteps) * 100);
+
       if (section === "tank") {
         stageUpdates.tank_status = nextOverallStatus;
-        stageUpdates.tank_percentage = nextOverallStatus === "Completed" ? 25 : 0;
+        stageUpdates.tank_percentage = Math.round((tankScore / sysCount) * 100);
         stageUpdates.tank_remarks = latestSystems.map((s) => `System ${s.system_no}: ${s.remarks}`).join(" | ");
         stageUpdates.tank_images = latestSystems;
         stageUpdates.tank_updated_at = new Date().toISOString();
       } else if (section === "mms") {
         stageUpdates.mms_status = nextOverallStatus;
-        stageUpdates.mms_percentage = nextOverallStatus === "Completed" ? 50 : 0;
+        stageUpdates.mms_percentage = Math.round((mmsScore / sysCount) * 100);
         stageUpdates.mms_remarks = latestSystems.map((s) => `System ${s.system_no}: ${s.remarks}`).join(" | ");
         stageUpdates.mms_images = latestSystems;
         stageUpdates.mms_updated_at = new Date().toISOString();
       } else if (section === "collectors") {
         stageUpdates.collectors_status = nextOverallStatus;
-        stageUpdates.collectors_percentage = nextOverallStatus === "Completed" ? 75 : 0;
+        stageUpdates.collectors_percentage = Math.round((collScore / sysCount) * 100);
         stageUpdates.collectors_remarks = latestSystems.map((s) => `System ${s.system_no}: ${s.remarks}`).join(" | ");
         stageUpdates.collectors_images = latestSystems;
         stageUpdates.collectors_updated_at = new Date().toISOString();
       } else if (section === "plumbing") {
         stageUpdates.plumbing_status = nextOverallStatus;
-        stageUpdates.plumbing_percentage = nextOverallStatus === "Completed" ? 100 : 0;
+        stageUpdates.plumbing_percentage = Math.round((plumbScore / sysCount) * 100);
         stageUpdates.plumbing_remarks = latestSystems.map((s) => `System ${s.system_no}: ${s.remarks}`).join(" | ");
         stageUpdates.plumbing_images = latestSystems;
         stageUpdates.plumbing_updated_at = new Date().toISOString();
       }
-
-      let nextTankCompleted = section === "tank" ? nextOverallStatus === "Completed" : tankSystems.every((s) => s.status === "Completed");
-      let nextMmsCompleted = section === "mms" ? nextOverallStatus === "Completed" : mmsSystems.every((s) => s.status === "Completed");
-      let nextCollCompleted = section === "collectors" ? nextOverallStatus === "Completed" : collSystems.every((s) => s.status === "Completed");
-      let nextPlumbCompleted = section === "plumbing" ? nextOverallStatus === "Completed" : plumbSystems.every((s) => s.status === "Completed");
-
-      let nextOverallPct = 0;
-      if (nextPlumbCompleted) nextOverallPct = 100;
-      else if (nextCollCompleted) nextOverallPct = 75;
-      else if (nextMmsCompleted) nextOverallPct = 50;
-      else if (nextTankCompleted) nextOverallPct = 25;
 
       stageUpdates.overall_percentage = nextOverallPct;
 
@@ -558,12 +564,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
         stageUpdates.overall_status = "In Progress";
         stageUpdates.started_at = inst.started_at || new Date().toISOString();
       } else {
-        const anyInProgress =
-          (section === "tank" ? nextOverallStatus === "In Progress" : tankSystems.some((s) => s.status === "In Progress")) ||
-          (section === "mms" ? nextOverallStatus === "In Progress" : mmsSystems.some((s) => s.status === "In Progress")) ||
-          (section === "collectors" ? nextOverallStatus === "In Progress" : collSystems.some((s) => s.status === "In Progress")) ||
-          (section === "plumbing" ? nextOverallStatus === "In Progress" : plumbSystems.some((s) => s.status === "In Progress"));
-        stageUpdates.overall_status = anyInProgress ? "In Progress" : "Pending";
+        stageUpdates.overall_status = "Pending";
       }
 
       const res = await fetch("/api/installations", {
@@ -881,13 +882,17 @@ export default function InstallationDetailPage({ params }: PageProps) {
   const isCollStageCompleted = inst?.collectors_status === "Completed";
   const isPlumbStageCompleted = inst?.plumbing_status === "Completed";
 
-  let calculatedProgress = 0;
-  if (inst?.plumbing_status === "Completed") calculatedProgress = 100;
-  else if (inst?.collectors_status === "Completed") calculatedProgress = 75;
-  else if (inst?.mms_status === "Completed") calculatedProgress = 50;
-  else if (inst?.tank_status === "Completed") calculatedProgress = 25;
-
   const systemCount = inst ? Math.max(1, inst.schools?.no_of_systems || 1) : 1;
+  const totalStepsUI = 4 * systemCount;
+
+  const getStageScoreUI = (sysArray: SystemState[]) => sysArray.reduce((acc, s) => {
+    if (s.status === "Completed") return acc + 1;
+    if (s.status === "In Progress") return acc + 0.5;
+    return acc;
+  }, 0);
+
+  const totalScoreUI = getStageScoreUI(tankSystems) + getStageScoreUI(mmsSystems) + getStageScoreUI(collSystems) + getStageScoreUI(plumbSystems);
+  const calculatedProgress = totalStepsUI > 0 ? Math.round((totalScoreUI / totalStepsUI) * 100) : 0;
 
   useEffect(() => {
     const token = localStorage.getItem("token");
