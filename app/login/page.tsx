@@ -516,6 +516,7 @@ export default function LoginPage() {
                             src="/robot-with-solar-panel.png"
                             alt="AI Robot monitoring solar panels"
                             fill
+                            sizes="(max-width: 1024px) 100vw, 50vw"
                             className="object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
                             priority
                         />

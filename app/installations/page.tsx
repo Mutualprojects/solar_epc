@@ -206,8 +206,24 @@ export default function InstallationsPage() {
     const search = searchTerm.toLowerCase();
     const matchesSearch = !searchTerm || 
       inst.installation_code?.toLowerCase().includes(search) ||
+      inst.overall_status?.toLowerCase().includes(search) ||
+      inst.remarks?.toLowerCase().includes(search) ||
       inst.schools?.kgbv_name?.toLowerCase().includes(search) ||
-      inst.schools?.district?.toLowerCase().includes(search);
+      inst.schools?.district?.toLowerCase().includes(search) ||
+      inst.schools?.pincode?.toLowerCase().includes(search) ||
+      inst.schools?.principal_name?.toLowerCase().includes(search) ||
+      inst.schools?.contact_number?.toLowerCase().includes(search) ||
+      inst.schools?.address?.toLowerCase().includes(search) ||
+      inst.materials?.material_code?.toLowerCase().includes(search) ||
+      inst.materials?.capacity?.toLowerCase().includes(search) ||
+      inst.tank_status?.toLowerCase().includes(search) ||
+      inst.mms_status?.toLowerCase().includes(search) ||
+      inst.collectors_status?.toLowerCase().includes(search) ||
+      inst.plumbing_status?.toLowerCase().includes(search) ||
+      inst.tank_remarks?.toLowerCase().includes(search) ||
+      inst.mms_remarks?.toLowerCase().includes(search) ||
+      inst.collectors_remarks?.toLowerCase().includes(search) ||
+      inst.plumbing_remarks?.toLowerCase().includes(search);
 
     return matchesDistrict && matchesSchool && matchesStatus && matchesSearch;
   });
@@ -298,7 +314,7 @@ export default function InstallationsPage() {
       <main className="flex-1 flex flex-col h-screen overflow-hidden relative">
         
         <SharedHeader 
-          placeholder="SEARCH BY CODE OR SCHOOL NAME..."
+          placeholder="SEARCH ALL INSTALLATION DATA..."
           showSearch={true}
           searchTerm={searchTerm}
           setSearchTerm={(val) => setSearchTerm(val)}
