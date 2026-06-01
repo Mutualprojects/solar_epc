@@ -135,6 +135,7 @@ export async function GET(request: Request) {
         overall_percentage: 0,
         overall_status: 'Pending',
         remarks: 'Auto-initialized pending record',
+        completion_certificate: null,
         is_virtual: true,
         schools: nestedSchool,
         materials: nestedMaterial
@@ -244,7 +245,8 @@ export async function PATCH(request: Request) {
       'plumbing_updated_at',
       'overall_percentage',
       'overall_status',
-      'remarks'
+      'remarks',
+      'completion_certificate'
     ];
 
     const cleanUpdates: any = {};
@@ -343,7 +345,8 @@ export async function PATCH(request: Request) {
         overall_status: cleanUpdates.overall_status || 'Pending',
         remarks: cleanUpdates.remarks || 'Activated from Pending dashboard',
         started_at: cleanUpdates.overall_percentage > 0 ? new Date().toISOString() : null,
-        completed_at: cleanUpdates.overall_percentage === 100 ? new Date().toISOString() : null
+        completed_at: cleanUpdates.overall_percentage === 100 ? new Date().toISOString() : null,
+        completion_certificate: cleanUpdates.completion_certificate || null
       };
 
       const { data, error } = await getInstallationsTable()

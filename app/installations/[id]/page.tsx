@@ -9,7 +9,7 @@ import { DM_Sans } from "next/font/google";
 import {
   Wrench, ChevronLeft, Loader2, MapPin, Phone,
   Camera, Eye, X, CheckCircle, Clock, Save, Lock, Sparkles, Check,
-  ChevronDown, Grid3x3, List, ZoomIn, Download, Share2, AlertCircle, Edit3
+  ChevronDown, Grid3x3, List, ZoomIn, Download, Share2, AlertCircle, Edit3, Award, UploadCloud
 } from "lucide-react";
 
 const dmSans = DM_Sans({
@@ -79,6 +79,7 @@ interface Installation {
   overall_percentage: number;
   overall_status: string;
   remarks: string;
+  completion_certificate?: string | null;
   schools?: School;
   materials?: Material;
 }
@@ -162,6 +163,11 @@ export default function InstallationDetailPage({ params }: PageProps) {
   const mmsFileRef = useRef<HTMLInputElement>(null);
   const collFileRef = useRef<HTMLInputElement>(null);
   const plumbFileRef = useRef<HTMLInputElement>(null);
+  
+  // ──── Completion Certificate State ────
+  const [completionCertificate, setCompletionCertificate] = useState<string | null>(null);
+  const [uploadingCert, setUploadingCert] = useState(false);
+  const certFileRef = useRef<HTMLInputElement>(null);
 
   // ─────────────────── UTILITIES ───────────────────
   const getSecureImageUrl = (url: string): string => {
@@ -280,6 +286,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
 
         if (found) {
           setInst(found);
+          setCompletionCertificate(found.completion_certificate || null);
 
           const systemCount = Math.max(1, found.schools?.no_of_systems || 1);
 
@@ -643,6 +650,98 @@ export default function InstallationDetailPage({ params }: PageProps) {
       showToast("error", err.message || "Failed to update record.");
     } finally {
       setSavingSection(null);
+    }
+  };
+
+  const handleCertificateUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !inst) return;
+
+    try {
+      setUploadingCert(true);
+
+      const compressionOptions = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1920,
+        useWebWorker: true,
+        fileType: "image/webp" as const,
+      };
+
+      let finalFile = file;
+      try {
+        const compressedBlob = await imageCompression(file, compressionOptions);
+        const newFileName = file.name.replace(/\.[^/.]+$/, ".webp");
+        finalFile = new File([compressedBlob], newFileName, { type: "image/webp" });
+      } catch (compressErr) {
+        console.error("Certificate compression failed, using original:", compressErr);
+      }
+
+      const formData = new FormData();
+      formData.append("schoolId", inst.school_id);
+      formData.append("section", "certificate");
+      formData.append("files", finalFile);
+
+      const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
+      const uploadData = await uploadRes.json();
+      if (!uploadData.success) throw new Error(uploadData.error || "Upload failed.");
+
+      const fileUrl = uploadData.urls?.[0];
+      if (!fileUrl) throw new Error("No URL returned from upload server.");
+
+      // Save directly to the database!
+      const patchRes = await fetch("/api/installations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: inst.id,
+          completion_certificate: fileUrl,
+        }),
+      });
+
+      const patchData = await patchRes.json();
+      if (patchData.success) {
+        setCompletionCertificate(fileUrl);
+        setInst((prev) => (prev ? { ...prev, completion_certificate: fileUrl } : null));
+        showToast("success", "Completion Certificate uploaded and saved successfully!");
+      } else {
+        throw new Error(patchData.error || "Failed to save certificate in database.");
+      }
+    } catch (err: any) {
+      showToast("error", err.message || "Failed to process certificate upload.");
+    } finally {
+      setUploadingCert(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  const handleDeleteCertificate = async () => {
+    if (!inst) return;
+    if (!confirm("Are you sure you want to delete the Completion Certificate?")) return;
+
+    try {
+      setUploadingCert(true);
+
+      const patchRes = await fetch("/api/installations", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: inst.id,
+          completion_certificate: null,
+        }),
+      });
+
+      const patchData = await patchRes.json();
+      if (patchData.success) {
+        setCompletionCertificate(null);
+        setInst((prev) => (prev ? { ...prev, completion_certificate: null } : null));
+        showToast("success", "Completion Certificate removed successfully.");
+      } else {
+        throw new Error(patchData.error || "Failed to remove certificate from database.");
+      }
+    } catch (err: any) {
+      showToast("error", err.message || "Failed to remove certificate.");
+    } finally {
+      setUploadingCert(false);
     }
   };
 
@@ -1313,6 +1412,100 @@ export default function InstallationDetailPage({ params }: PageProps) {
                     () => handleImageUpload({ target: { files: null } } as any, "plumbing"),
                     () => saveStageProgress("plumbing")
                   )}
+
+                  {/* Completion Certificate Card */}
+                  <div className="bg-white rounded-2xl shadow-sm border border-slate-200 hover:border-slate-350 transition-all duration-300 overflow-hidden">
+                    <div className="p-4 md:p-5 border-b border-slate-100 bg-slate-50/50 flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-8 h-8 md:w-9 md:h-9 rounded-lg border border-emerald-250 bg-emerald-50/60 flex items-center justify-center text-emerald-700 shadow-sm">
+                          <Award className="w-4 h-4 md:w-5 h-5 text-emerald-600" />
+                        </div>
+                        <div>
+                          <h3 className="text-xs md:text-sm font-black text-slate-850 uppercase tracking-tight leading-tight">
+                            Completion Certificate
+                          </h3>
+                          <p className="text-[8px] md:text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                            Official Site Verification Document
+                          </p>
+                        </div>
+                      </div>
+                      
+                      {completionCertificate ? (
+                        <span className="inline-flex items-center px-2.5 py-0.5 bg-emerald-100 border border-emerald-300 text-emerald-800 text-[8px] md:text-[9px] font-black rounded-full uppercase tracking-wider shadow-sm">
+                          Uploaded ✓
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2.5 py-0.5 bg-slate-100 border border-slate-200 text-slate-500 text-[8px] md:text-[9px] font-black rounded-full uppercase tracking-wider">
+                          Pending
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="p-4 md:p-5 space-y-4">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="flex flex-col justify-center space-y-2.5">
+                          <p className="text-[10px] md:text-xs text-slate-500 font-bold uppercase leading-relaxed">
+                            Please upload a scanned image or photo of the signed Completion Certificate for this site.
+                          </p>
+                          <p className="text-[8px] md:text-[9px] text-slate-400 font-semibold uppercase leading-normal">
+                            Note: This upload is required for administrative sign-off but does not affect the technical installation percentage.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl p-4 bg-slate-50 hover:bg-slate-100/50 transition-colors relative min-h-[120px]">
+                          {completionCertificate ? (
+                            <div className="relative group/cert w-full h-[120px] rounded-lg overflow-hidden border border-slate-300 shadow-sm bg-white">
+                              <img 
+                                src={getSecureImageUrl(completionCertificate)} 
+                                alt="Completion Certificate" 
+                                className="w-full h-full object-contain" 
+                              />
+                              <div className="absolute inset-0 bg-black/45 opacity-0 group-hover/cert:opacity-100 transition-opacity flex items-center justify-center gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => setImageModal({ isOpen: true, imageUrl: completionCertificate, imageIndex: 0 })}
+                                  className="p-2 bg-white/95 hover:bg-white text-slate-700 rounded-lg shadow transition-all cursor-pointer"
+                                >
+                                  <ZoomIn className="w-4 h-4" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={handleDeleteCertificate}
+                                  className="p-2 bg-red-500/95 hover:bg-red-650 text-white rounded-lg shadow transition-all cursor-pointer"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="text-center space-y-2">
+                              <UploadCloud className="w-8 h-8 text-slate-400 mx-auto" />
+                              <button
+                                type="button"
+                                onClick={() => certFileRef.current?.click()}
+                                disabled={uploadingCert}
+                                className="px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 border border-emerald-700 text-white text-[9px] font-black uppercase tracking-wider rounded-lg transition-all inline-flex items-center gap-1.5 cursor-pointer shadow-sm"
+                              >
+                                {uploadingCert ? (
+                                  <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                                ) : (
+                                  <Camera className="w-3.5 h-3.5" />
+                                )}
+                                Choose Certificate
+                              </button>
+                              <input
+                                type="file"
+                                ref={certFileRef}
+                                onChange={handleCertificateUpload}
+                                className="hidden"
+                                accept="image/*"
+                              />
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             )}
