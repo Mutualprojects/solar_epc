@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, Sun, Loader2, Eye, EyeOff } from "lucide-react";
+import { Mail, Lock, ArrowRight, Sun, Loader2, Eye, EyeOff, School, Zap, Droplet, ThermometerSun, Workflow, Activity, Sparkles } from "lucide-react";
 import Image from "next/image";
 
 export default function LoginPage() {
@@ -430,6 +430,21 @@ export default function LoginPage() {
           z-index: 2;
         }
  
+         @keyframes flowDash {
+           to {
+             stroke-dashoffset: -100;
+           }
+         }
+         .animate-flow-dash-fast {
+           animation: flowDash 2.5s linear infinite;
+         }
+         .animate-flow-dash-medium {
+           animation: flowDash 5s linear infinite;
+         }
+         .animate-flow-dash-slow {
+           animation: flowDash 8.5s linear infinite;
+         }
+ 
         /* Responsive Design */
         @media (max-width: 1024px) {
           .right-panel { display: none; }
@@ -438,7 +453,7 @@ export default function LoginPage() {
           .headline { font-size: 36px; }
         }
       `}</style>
-
+ 
             <div className="login-root">
                 {/* ── LEFT PANEL ── */}
                 <div className="left-panel">
@@ -536,16 +551,143 @@ export default function LoginPage() {
                 </div>
 
                 {/* ── RIGHT PANEL ── */}
-                <div className="right-panel flex items-center justify-center bg-slate-50">
-                    <div className="relative w-3/4 h-3/4 max-w-2xl max-h-[800px]">
-                        <Image
-                            src="/robot-with-solar-panel.png"
-                            alt="AI Robot monitoring solar panels"
-                            fill
-                            sizes="(max-width: 1024px) 100vw, 50vw"
-                            className="object-contain drop-shadow-2xl hover:scale-105 transition-transform duration-700"
-                            priority
-                        />
+                <div className="right-panel">
+                    <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 flex flex-col justify-between p-12 overflow-hidden select-none">
+                        
+                        {/* Ambient decorative grid and glowing light */}
+                        <div className="absolute inset-0 bg-[linear-gradient(to_right,#0f172a_1px,transparent_1px),linear-gradient(to_bottom,#0f172a_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-60"></div>
+                        <div className="absolute -top-40 -right-40 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[150px] animate-pulse"></div>
+                        <div className="absolute -bottom-40 -left-40 w-[600px] h-[600px] bg-teal-500/10 rounded-full blur-[150px] animate-pulse delay-1000"></div>
+
+                        {/* Top Badge */}
+                        <div className="relative z-10 flex items-center justify-between">
+                            <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-[10px] font-black uppercase tracking-wider">
+                                <Activity className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                                Active Flow Network
+                            </div>
+                            <div className="flex items-center gap-1.5 text-slate-400 text-[10px] font-black uppercase tracking-wider">
+                                <Sparkles className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
+                                Interactive View
+                            </div>
+                        </div>
+
+                        {/* Flow Network Canvas */}
+                        <div className="relative w-full flex-1 flex items-center justify-center min-h-[400px] z-10">
+                            
+                            {/* Animated Connection Edges (SVG paths) */}
+                            <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ minHeight: '100%' }}>
+                                <defs>
+                                    <linearGradient id="electricity-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.8" />
+                                        <stop offset="100%" stopColor="#10b981" stopOpacity="0.8" />
+                                    </linearGradient>
+                                    <linearGradient id="heat-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#ef4444" stopOpacity="0.8" />
+                                        <stop offset="100%" stopColor="#2563eb" stopOpacity="0.8" />
+                                    </linearGradient>
+                                    <linearGradient id="water-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#2563eb" stopOpacity="0.8" />
+                                        <stop offset="100%" stopColor="#10b981" stopOpacity="0.8" />
+                                    </linearGradient>
+                                </defs>
+
+                                {/* 1. Solar Panels (Top-Left) -> School Site (Bottom-Right) */}
+                                <path
+                                    d="M 180, 160 C 180, 280 340, 200 340, 280"
+                                    fill="none"
+                                    stroke="url(#electricity-grad)"
+                                    strokeWidth="3"
+                                    strokeDasharray="8, 6"
+                                    className="animate-flow-dash-fast"
+                                />
+
+                                {/* 2. Solar Collector (Top-Right) -> Water Tank (Bottom-Left) */}
+                                <path
+                                    d="M 340, 160 C 340, 240 180, 200 180, 280"
+                                    fill="none"
+                                    stroke="url(#heat-grad)"
+                                    strokeWidth="3"
+                                    strokeDasharray="8, 6"
+                                    className="animate-flow-dash-medium"
+                                />
+
+                                {/* 3. Water Tank (Bottom-Left) -> School Site (Bottom-Right) */}
+                                <path
+                                    d="M 180, 280 L 340, 280"
+                                    fill="none"
+                                    stroke="url(#water-grad)"
+                                    strokeWidth="3"
+                                    strokeDasharray="8, 6"
+                                    className="animate-flow-dash-slow"
+                                />
+                            </svg>
+
+                            {/* Node 1: Solar Panels (Top-Left) */}
+                            <div className="absolute top-[12%] left-[10%] group cursor-pointer">
+                                <div className="px-4 py-3 bg-slate-900/90 backdrop-blur border border-emerald-500/20 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgba(0,0,0,0.5)] group-hover:border-emerald-400 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-300">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-amber-600 flex items-center justify-center text-white shadow-lg">
+                                        <Zap className="w-5 h-5 animate-pulse" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-[10px] font-black text-amber-400 uppercase tracking-widest leading-none">Generation</div>
+                                        <div className="text-xs font-black text-white mt-1 uppercase tracking-wider">Solar Panels</div>
+                                    </div>
+                                </div>
+                                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-b border-r border-emerald-500/20 rotate-45 group-hover:border-emerald-400"></div>
+                            </div>
+
+                            {/* Node 2: Solar Hot Water Heater / Collector (Top-Right) */}
+                            <div className="absolute top-[12%] right-[10%] group cursor-pointer">
+                                <div className="px-4 py-3 bg-slate-900/90 backdrop-blur border border-emerald-500/20 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgba(0,0,0,0.5)] group-hover:border-emerald-400 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-300">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-red-500 to-orange-600 flex items-center justify-center text-white shadow-lg">
+                                        <ThermometerSun className="w-5 h-5 animate-pulse" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-[10px] font-black text-red-400 uppercase tracking-widest leading-none">Thermal Loop</div>
+                                        <div className="text-xs font-black text-white mt-1 uppercase tracking-wider">Solar Heater</div>
+                                    </div>
+                                </div>
+                                <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-b border-r border-emerald-500/20 rotate-45 group-hover:border-emerald-400"></div>
+                            </div>
+
+                            {/* Node 3: Water Tank Storage (Bottom-Left) */}
+                            <div className="absolute bottom-[22%] left-[10%] group cursor-pointer">
+                                <div className="px-4 py-3 bg-slate-900/90 backdrop-blur border border-emerald-500/20 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgba(0,0,0,0.5)] group-hover:border-emerald-400 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-300">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white shadow-lg">
+                                        <Droplet className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-[10px] font-black text-blue-400 uppercase tracking-widest leading-none">Storage</div>
+                                        <div className="text-xs font-black text-white mt-1 uppercase tracking-wider">Water Tank</div>
+                                    </div>
+                                </div>
+                                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-t border-l border-emerald-500/20 rotate-45 group-hover:border-emerald-400"></div>
+                            </div>
+
+                            {/* Node 4: School Site Load (Bottom-Right) */}
+                            <div className="absolute bottom-[22%] right-[10%] group cursor-pointer">
+                                <div className="px-4 py-3 bg-slate-900/90 backdrop-blur border border-emerald-500/20 rounded-2xl flex items-center gap-3 shadow-[0_8px_30px_rgba(0,0,0,0.5)] group-hover:border-emerald-400 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.3)] transition-all duration-300">
+                                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white shadow-lg">
+                                        <School className="w-5 h-5" />
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="text-[10px] font-black text-emerald-400 uppercase tracking-widest leading-none">End Consumer</div>
+                                        <div className="text-xs font-black text-white mt-1 uppercase tracking-wider">KGBV School</div>
+                                    </div>
+                                </div>
+                                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-slate-900 border-t border-l border-emerald-500/20 rotate-45 group-hover:border-emerald-400"></div>
+                            </div>
+                        </div>
+
+                        {/* Bottom Description */}
+                        <div className="relative z-10 text-left">
+                            <h3 className="text-2xl md:text-3xl font-black text-white uppercase tracking-wider leading-tight mb-2">
+                                SMART <span className="text-emerald-400">SOLAR NETWORK</span>
+                            </h3>
+                            <p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase tracking-widest max-w-lg leading-relaxed">
+                                Real-time synchronization of grid telemetry, material flow dispatches, and installation execution status at rural schools.
+                            </p>
+                        </div>
                     </div>
                 </div>
             </div>
