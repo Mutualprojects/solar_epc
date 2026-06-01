@@ -20,8 +20,14 @@ export async function GET(request: Request) {
       return new NextResponse('Unauthorized image host', { status: 403 });
     }
 
+    let targetUrl = imageUrl;
+    // Replace public IP with internal private IP so the server can fetch it successfully without hairpin NAT issues
+    if (targetUrl.includes('183.82.117.36')) {
+      targetUrl = targetUrl.replace('183.82.117.36', '172.30.0.186');
+    }
+
     // Fetch the image from the source URL server-side
-    const response = await fetch(imageUrl, {
+    const response = await fetch(targetUrl, {
       headers: {
         'Accept': 'image/*'
       }

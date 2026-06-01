@@ -701,7 +701,11 @@ export default function InstallationDetailPage({ params }: PageProps) {
       const patchData = await patchRes.json();
       if (patchData.success) {
         setCompletionCertificate(fileUrl);
-        setInst((prev) => (prev ? { ...prev, completion_certificate: fileUrl } : null));
+        if (inst.id.startsWith("virtual_inst_") && patchData.data?.id) {
+          router.replace(`/installations/${patchData.data.id}`);
+        } else {
+          setInst((prev) => (prev ? { ...prev, completion_certificate: fileUrl } : null));
+        }
         showToast("success", "Completion Certificate uploaded and saved successfully!");
       } else {
         throw new Error(patchData.error || "Failed to save certificate in database.");
