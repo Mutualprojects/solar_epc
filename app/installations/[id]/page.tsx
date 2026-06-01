@@ -164,6 +164,17 @@ export default function InstallationDetailPage({ params }: PageProps) {
   const plumbFileRef = useRef<HTMLInputElement>(null);
 
   // ─────────────────── UTILITIES ───────────────────
+  const getSecureImageUrl = (url: string): string => {
+    if (!url) return "";
+    if (url.startsWith("data:")) return url;
+    if (url.startsWith("blob:")) return url;
+    // Proxy insecure HTTP urls or raw server IPs so they load securely over HTTPS
+    if (url.startsWith("http://") || url.includes("183.82.117.36") || url.includes("172.30.0.186")) {
+      return `/api/proxy-image?url=${encodeURIComponent(url)}`;
+    }
+    return url;
+  };
+
   const showToast = (type: "success" | "error", message: string) => {
     setToast({ type, message });
     setTimeout(() => setToast(null), 4000);
@@ -871,7 +882,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
         key={idx}
         className="relative group/img w-14 h-14 md:w-16 md:h-16 rounded-lg overflow-hidden border border-slate-300 shadow-sm shrink-0 hover:shadow-md transition-all"
       >
-        <img src={item.url} alt={`${section}-${idx}`} className="w-full h-full object-cover" />
+        <img src={getSecureImageUrl(item.url)} alt={`${section}-${idx}`} className="w-full h-full object-cover" />
 
         {/* Hover Overlay */}
         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover/img:opacity-100 transition-opacity flex items-center justify-center gap-1">
@@ -970,7 +981,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
               onClick={(e) => e.stopPropagation()}
             >
               <img
-                src={imageModal.imageUrl}
+                src={getSecureImageUrl(imageModal.imageUrl || "")}
                 alt="Expanded view"
                 className="w-full h-full object-contain rounded-lg shadow-2xl"
               />
@@ -981,7 +992,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
                 <X className="w-6 h-6" />
               </button>
               <a
-                href={imageModal.imageUrl}
+                href={getSecureImageUrl(imageModal.imageUrl || "")}
                 download
                 className="absolute bottom-4 right-4 bg-emerald-600 hover:bg-emerald-700 text-white p-2 rounded-full shadow-lg transition-all"
               >
