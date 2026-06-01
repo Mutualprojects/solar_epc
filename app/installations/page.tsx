@@ -111,7 +111,7 @@ export default function InstallationsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedSchoolId, setSelectedSchoolId] = useState("");
-  const [selectedStatus, setSelectedStatus] = useState("");
+  const [selectedStatus, setSelectedStatus] = useState("Completed");
 
   // Pagination States (50 per page as required)
   const [currentPage, setCurrentPage] = useState(1);
@@ -145,16 +145,20 @@ export default function InstallationsPage() {
   // Load saved filters on mount
   useEffect(() => {
     const savedDistrict = sessionStorage.getItem("inst_district");
-    if (savedDistrict) setSelectedDistrict(savedDistrict);
+    if (savedDistrict !== null) setSelectedDistrict(savedDistrict);
 
     const savedSchool = sessionStorage.getItem("inst_school");
-    if (savedSchool) setSelectedSchoolId(savedSchool);
+    if (savedSchool !== null) setSelectedSchoolId(savedSchool);
 
     const savedStatus = sessionStorage.getItem("inst_status");
-    if (savedStatus) setSelectedStatus(savedStatus);
+    if (savedStatus !== null) {
+      setSelectedStatus(savedStatus);
+    } else {
+      setSelectedStatus("Completed");
+    }
 
     const savedSearch = sessionStorage.getItem("inst_search");
-    if (savedSearch) setSearchTerm(savedSearch);
+    if (savedSearch !== null) setSearchTerm(savedSearch);
 
     const savedPage = sessionStorage.getItem("inst_page");
     if (savedPage) setCurrentPage(parseInt(savedPage, 10));
