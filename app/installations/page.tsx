@@ -142,6 +142,37 @@ export default function InstallationsPage() {
     fetchInitialData();
   }, [router]);
 
+  // Load saved filters on mount
+  useEffect(() => {
+    const savedDistrict = sessionStorage.getItem("inst_district");
+    if (savedDistrict) setSelectedDistrict(savedDistrict);
+
+    const savedSchool = sessionStorage.getItem("inst_school");
+    if (savedSchool) setSelectedSchoolId(savedSchool);
+
+    const savedStatus = sessionStorage.getItem("inst_status");
+    if (savedStatus) setSelectedStatus(savedStatus);
+
+    const savedSearch = sessionStorage.getItem("inst_search");
+    if (savedSearch) setSearchTerm(savedSearch);
+
+    const savedPage = sessionStorage.getItem("inst_page");
+    if (savedPage) setCurrentPage(parseInt(savedPage, 10));
+
+    const savedView = sessionStorage.getItem("inst_view");
+    if (savedView === "grid" || savedView === "table") setViewMode(savedView);
+  }, []);
+
+  // Save filters on change
+  useEffect(() => {
+    sessionStorage.setItem("inst_district", selectedDistrict);
+    sessionStorage.setItem("inst_school", selectedSchoolId);
+    sessionStorage.setItem("inst_status", selectedStatus);
+    sessionStorage.setItem("inst_search", searchTerm);
+    sessionStorage.setItem("inst_page", currentPage.toString());
+    sessionStorage.setItem("inst_view", viewMode);
+  }, [selectedDistrict, selectedSchoolId, selectedStatus, searchTerm, currentPage, viewMode]);
+
   const fetchInitialData = async () => {
     try {
       setLoading(true);
