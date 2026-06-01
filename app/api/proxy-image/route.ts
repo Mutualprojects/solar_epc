@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { supabase } from '@/lib/supabase';
 
 export async function GET(request: Request) {
   try {
@@ -18,6 +19,40 @@ export async function GET(request: Request) {
 
     if (!isAllowedHost) {
       return new NextResponse('Unauthorized image host', { status: 403 });
+    }
+
+    // Attempt SDK-based authenticated download to handle non-public/private buckets gracefully
+    if (imageUrl.includes('/storage/v1/object/public/')) {
+      const parts = imageUrl.split('/storage/v1/object/public/');
+      if (parts.length === 2) {
+        const pathParts = parts[1].split('/');
+        const bucketName = pathParts[0];
+        const storagePath = pathParts.slice(1).join('/');
+
+        try {
+          const { data: fileBlob, error: downloadError } = await supabase
+            .storage
+            .from(bucketName)
+            .download(storagePath);
+
+          if (!downloadError && fileBlob) {
+            const contentType = fileBlob.type || 'image/jpeg';
+            const buffer = await fileBlob.arrayBuffer();
+
+            return new NextResponse(buffer, {
+              status: 200,
+              headers: {
+                'Content-Type': contentType,
+                'Cache-Control': 'public, max-age=31536000, immutable',
+              },
+            });
+          } else if (downloadError) {
+            console.warn(`SDK download failed for bucket '${bucketName}', path '${storagePath}': ${downloadError.message}. Falling back to network fetch.`);
+          }
+        } catch (sdkErr: any) {
+          console.warn(`Error during SDK download fallback: ${sdkErr.message}. Falling back to network fetch.`);
+        }
+      }
     }
 
     let targetUrl = imageUrl;
