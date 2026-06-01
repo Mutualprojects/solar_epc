@@ -461,6 +461,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
     try {
       setSavingSection(section);
 
+      // ── 1. Upload any pending image files ──
       let pending: PendingFile[] = [];
       if (section === "tank") pending = pendingTankFiles;
       else if (section === "mms") pending = pendingMmsFiles;
@@ -468,105 +469,141 @@ export default function InstallationDetailPage({ params }: PageProps) {
       else if (section === "plumbing") pending = pendingPlumbFiles;
 
       let newlyUploadedUrls: string[] = [];
-
       if (pending.length > 0) {
         const formData = new FormData();
         formData.append("schoolId", inst.school_id);
         formData.append("section", section);
+        for (const pf of pending) formData.append("files", pf.file);
 
-        for (const pf of pending) {
-          formData.append("files", pf.file);
-        }
-
-        const uploadRes = await fetch("/api/upload", {
-          method: "POST",
-          body: formData,
-        });
+        const uploadRes = await fetch("/api/upload", { method: "POST", body: formData });
         const uploadData = await uploadRes.json();
-
-        if (!uploadData.success) {
-          throw new Error(uploadData.error || "Failed to upload pending images during save.");
-        }
-
+        if (!uploadData.success) throw new Error(uploadData.error || "Image upload failed.");
         newlyUploadedUrls = uploadData.urls || [];
       }
 
+      // ── 2. Get the current status explicitly selected by the user ──
+      let selectedStatus = "Pending";
       let currentImages: string[] = [];
-      if (section === "tank") currentImages = [...tankImages, ...newlyUploadedUrls];
-      else if (section === "mms") currentImages = [...mmsImages, ...newlyUploadedUrls];
-      else if (section === "collectors") currentImages = [...collImages, ...newlyUploadedUrls];
-      else if (section === "plumbing") currentImages = [...plumbImages, ...newlyUploadedUrls];
-
-      if (section === "tank") setTankImages(currentImages);
-      else if (section === "mms") setMmsImages(currentImages);
-      else if (section === "collectors") setCollImages(currentImages);
-      else if (section === "plumbing") setPlumbImages(currentImages);
-
-      const latestSystems = getLatestSystemsWithImages(section, currentImages);
-      const nextOverallStatus = getModuleOverallStatus(latestSystems);
-
-      if (section === "tank") setTankSystems(latestSystems);
-      if (section === "mms") setMmsSystems(latestSystems);
-      if (section === "collectors") setCollSystems(latestSystems);
-      if (section === "plumbing") setPlumbSystems(latestSystems);
-
-      const stageUpdates: any = { id: inst.id };
-
-      const getStageScore = (sysArray: SystemState[]) => sysArray.reduce((acc, s) => {
-        if (s.status === "Completed") return acc + 1;
-        if (s.status === "In Progress") return acc + 0.5;
-        return acc;
-      }, 0);
-
-      const sysCount = Math.max(1, inst.schools?.no_of_systems || 1);
-      
-      const tankScore = section === "tank" ? getStageScore(latestSystems) : getStageScore(tankSystems);
-      const mmsScore = section === "mms" ? getStageScore(latestSystems) : getStageScore(mmsSystems);
-      const collScore = section === "collectors" ? getStageScore(latestSystems) : getStageScore(collSystems);
-      const plumbScore = section === "plumbing" ? getStageScore(latestSystems) : getStageScore(plumbSystems);
-
-      const totalScore = tankScore + mmsScore + collScore + plumbScore;
-      const totalSteps = 4 * sysCount;
-      const nextOverallPct = Math.round((totalScore / totalSteps) * 100);
+      let currentRemarks = "";
 
       if (section === "tank") {
-        stageUpdates.tank_status = nextOverallStatus;
-        stageUpdates.tank_percentage = Math.round((tankScore / sysCount) * 100);
-        stageUpdates.tank_remarks = latestSystems.map((s) => `System ${s.system_no}: ${s.remarks}`).join(" | ");
-        stageUpdates.tank_images = latestSystems;
+        selectedStatus = tankStatus;
+        currentImages = [...tankImages, ...newlyUploadedUrls];
+        currentRemarks = tankRemarks;
+        setTankImages(currentImages);
+      } else if (section === "mms") {
+        selectedStatus = mmsStatus;
+        currentImages = [...mmsImages, ...newlyUploadedUrls];
+        currentRemarks = mmsRemarks;
+        setMmsImages(currentImages);
+      } else if (section === "collectors") {
+        selectedStatus = collStatus;
+        currentImages = [...collImages, ...newlyUploadedUrls];
+        currentRemarks = collRemarks;
+        setCollImages(currentImages);
+      } else if (section === "plumbing") {
+        selectedStatus = plumbStatus;
+        currentImages = [...plumbImages, ...newlyUploadedUrls];
+        currentRemarks = plumbRemarks;
+        setPlumbImages(currentImages);
+      }
+
+      // ── 3. Build updated system state array for this section ──
+      const getSystemsForSection = (sec: string) => {
+        if (sec === "tank") return tankSystems;
+        if (sec === "mms") return mmsSystems;
+        if (sec === "collectors") return collSystems;
+        return plumbSystems;
+      };
+      const currentSystems = [...getSystemsForSection(section)];
+      if (activeSystem <= currentSystems.length) {
+        currentSystems[activeSystem - 1] = {
+          system_no: activeSystem,
+          status: selectedStatus,
+          remarks: currentRemarks,
+          images: currentImages,
+        };
+      }
+
+      // Update local system state arrays
+      if (section === "tank") setTankSystems(currentSystems);
+      else if (section === "mms") setMmsSystems(currentSystems);
+      else if (section === "collectors") setCollSystems(currentSystems);
+      else if (section === "plumbing") setPlumbSystems(currentSystems);
+
+      // ── 4. Compute stage-level overall status from all systems in this section ──
+      const stageStatus = currentSystems.every(s => s.status === "Completed")
+        ? "Completed"
+        : currentSystems.some(s => s.status === "In Progress" || s.status === "Completed")
+        ? "In Progress"
+        : currentSystems.some(s => s.status === "Suspended")
+        ? "Suspended"
+        : "Pending";
+
+      // ── 5. Simple, predictable percentage per stage ──
+      const statusToPct = (s: string) => {
+        if (s === "Completed") return 100;
+        if (s === "In Progress") return 50;
+        if (s === "Suspended") return 0;
+        return 0; // Pending
+      };
+
+      const stagePct = statusToPct(stageStatus);
+
+      // Get the other sections' current saved status from inst (DB truth)
+      const savedTankStatus  = section === "tank" ? stageStatus : (inst.tank_status || "Pending");
+      const savedMmsStatus   = section === "mms" ? stageStatus : (inst.mms_status || "Pending");
+      const savedCollStatus  = section === "collectors" ? stageStatus : (inst.collectors_status || "Pending");
+      const savedPlumbStatus = section === "plumbing" ? stageStatus : (inst.plumbing_status || "Pending");
+
+      const overallPct = Math.round(
+        (statusToPct(savedTankStatus) + statusToPct(savedMmsStatus) + statusToPct(savedCollStatus) + statusToPct(savedPlumbStatus)) / 4
+      );
+
+      const overallStatus =
+        overallPct === 100 ? "Completed"
+        : overallPct > 0 ? "In Progress"
+        : "Pending";
+
+      // ── 6. Build the patch payload ──
+      const stageUpdates: any = { id: inst.id };
+
+      if (section === "tank") {
+        stageUpdates.tank_status     = stageStatus;
+        stageUpdates.tank_percentage = stagePct;
+        stageUpdates.tank_remarks    = currentRemarks;
+        stageUpdates.tank_images     = currentSystems;
         stageUpdates.tank_updated_at = new Date().toISOString();
       } else if (section === "mms") {
-        stageUpdates.mms_status = nextOverallStatus;
-        stageUpdates.mms_percentage = Math.round((mmsScore / sysCount) * 100);
-        stageUpdates.mms_remarks = latestSystems.map((s) => `System ${s.system_no}: ${s.remarks}`).join(" | ");
-        stageUpdates.mms_images = latestSystems;
+        stageUpdates.mms_status     = stageStatus;
+        stageUpdates.mms_percentage = stagePct;
+        stageUpdates.mms_remarks    = currentRemarks;
+        stageUpdates.mms_images     = currentSystems;
         stageUpdates.mms_updated_at = new Date().toISOString();
       } else if (section === "collectors") {
-        stageUpdates.collectors_status = nextOverallStatus;
-        stageUpdates.collectors_percentage = Math.round((collScore / sysCount) * 100);
-        stageUpdates.collectors_remarks = latestSystems.map((s) => `System ${s.system_no}: ${s.remarks}`).join(" | ");
-        stageUpdates.collectors_images = latestSystems;
+        stageUpdates.collectors_status     = stageStatus;
+        stageUpdates.collectors_percentage = stagePct;
+        stageUpdates.collectors_remarks    = currentRemarks;
+        stageUpdates.collectors_images     = currentSystems;
         stageUpdates.collectors_updated_at = new Date().toISOString();
       } else if (section === "plumbing") {
-        stageUpdates.plumbing_status = nextOverallStatus;
-        stageUpdates.plumbing_percentage = Math.round((plumbScore / sysCount) * 100);
-        stageUpdates.plumbing_remarks = latestSystems.map((s) => `System ${s.system_no}: ${s.remarks}`).join(" | ");
-        stageUpdates.plumbing_images = latestSystems;
+        stageUpdates.plumbing_status     = stageStatus;
+        stageUpdates.plumbing_percentage = stagePct;
+        stageUpdates.plumbing_remarks    = currentRemarks;
+        stageUpdates.plumbing_images     = currentSystems;
         stageUpdates.plumbing_updated_at = new Date().toISOString();
       }
 
-      stageUpdates.overall_percentage = nextOverallPct;
+      stageUpdates.overall_percentage = overallPct;
+      stageUpdates.overall_status     = overallStatus;
 
-      if (nextOverallPct === 100) {
-        stageUpdates.overall_status = "Completed";
+      if (overallStatus === "Completed") {
         stageUpdates.completed_at = new Date().toISOString();
-      } else if (nextOverallPct > 0) {
-        stageUpdates.overall_status = "In Progress";
+      } else if (overallStatus === "In Progress") {
         stageUpdates.started_at = inst.started_at || new Date().toISOString();
-      } else {
-        stageUpdates.overall_status = "Pending";
       }
 
+      // ── 7. Send PATCH to API ──
       const res = await fetch("/api/installations", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -580,9 +617,9 @@ export default function InstallationDetailPage({ params }: PageProps) {
         else if (section === "collectors") setPendingCollFiles([]);
         else if (section === "plumbing") setPendingPlumbFiles([]);
 
-        showToast("success", `${section.toUpperCase()} stage saved!`);
-        router.refresh();
+        showToast("success", `${section.toUpperCase()} stage saved successfully!`);
 
+        // Update inst state with fresh DB data
         if (inst.id.startsWith("virtual_inst_") && data.data?.id) {
           router.replace(`/installations/${data.data.id}`);
         } else {
@@ -592,11 +629,12 @@ export default function InstallationDetailPage({ params }: PageProps) {
         showToast("error", data.error || `Failed to save ${section} status.`);
       }
     } catch (err: any) {
-      showToast("error", err.message || "Failed to update record details.");
+      showToast("error", err.message || "Failed to update record.");
     } finally {
       setSavingSection(null);
     }
   };
+
 
   // ─────────────────── RENDER COMPONENTS ───────────────────
   const renderStageCard = (
@@ -882,17 +920,16 @@ export default function InstallationDetailPage({ params }: PageProps) {
   const isCollStageCompleted = inst?.collectors_status === "Completed";
   const isPlumbStageCompleted = inst?.plumbing_status === "Completed";
 
+  // ── Live progress reads directly from current status state (not system arrays) ──
   const systemCount = inst ? Math.max(1, inst.schools?.no_of_systems || 1) : 1;
-  const totalStepsUI = 4 * systemCount;
-
-  const getStageScoreUI = (sysArray: SystemState[]) => sysArray.reduce((acc, s) => {
-    if (s.status === "Completed") return acc + 1;
-    if (s.status === "In Progress") return acc + 0.5;
-    return acc;
-  }, 0);
-
-  const totalScoreUI = getStageScoreUI(tankSystems) + getStageScoreUI(mmsSystems) + getStageScoreUI(collSystems) + getStageScoreUI(plumbSystems);
-  const calculatedProgress = totalStepsUI > 0 ? Math.round((totalScoreUI / totalStepsUI) * 100) : 0;
+  const statusToPctUI = (s: string) => {
+    if (s === "Completed") return 100;
+    if (s === "In Progress") return 50;
+    return 0;
+  };
+  const calculatedProgress = Math.round(
+    (statusToPctUI(tankStatus) + statusToPctUI(mmsStatus) + statusToPctUI(collStatus) + statusToPctUI(plumbStatus)) / 4
+  );
 
   useEffect(() => {
     const token = localStorage.getItem("token");
