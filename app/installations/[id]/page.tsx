@@ -642,6 +642,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
     stageName: string,
     sectionKey: "tank" | "mms" | "collectors" | "plumbing",
     status: string,
+    savedStatus: string,
     percentage: number,
     remarks: string,
     images: string[],
@@ -652,8 +653,8 @@ export default function InstallationDetailPage({ params }: PageProps) {
     onUpload: (section: "tank" | "mms" | "collectors" | "plumbing") => void,
     onSave: (section: "tank" | "mms" | "collectors" | "plumbing") => void
   ) => {
-    // isLocked = ONLY used for visual styling, never to hide Save button
-    const isLocked = status === "Completed";
+    // isLocked = based on what's SAVED in DB, not the local dropdown value
+    const isLocked = savedStatus === "Completed";
     const isInProgress = status === "In Progress";
     const isBeyondApplicable = activeSystem > systemCount;
 
@@ -818,15 +819,22 @@ export default function InstallationDetailPage({ params }: PageProps) {
                   <button
                     type="button"
                     onClick={() => onSave(sectionKey)}
-                    disabled={savingSection === sectionKey}
-                    className="px-4 py-2 md:py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400 text-white font-black text-[9px] md:text-[10px] uppercase tracking-wider rounded-lg shadow-md hover:shadow-lg transition-all flex items-center justify-center gap-2 cursor-pointer disabled:opacity-70"
+                    disabled={savingSection === sectionKey || isLocked}
+                    title={isLocked ? "Stage already completed and saved. Change status to re-save." : ""}
+                    className={`px-4 py-2 md:py-2.5 text-white font-black text-[9px] md:text-[10px] uppercase tracking-wider rounded-lg shadow-md transition-all flex items-center justify-center gap-2 ${
+                      isLocked
+                        ? "bg-emerald-300 cursor-not-allowed opacity-60"
+                        : "bg-emerald-600 hover:bg-emerald-700 hover:shadow-lg cursor-pointer"
+                    } disabled:opacity-60`}
                   >
                     {savingSection === sectionKey ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : isLocked ? (
+                      <Lock className="w-4 h-4" />
                     ) : (
                       <Save className="w-4 h-4" />
                     )}
-                    Save Stage {stageNum}
+                    {isLocked ? "Saved ✓" : `Save Stage ${stageNum}`}
                   </button>
                 </div>
               </>
@@ -1185,6 +1193,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
                     "Tank Installation",
                     "tank",
                     tankStatus,
+                    inst?.tank_status || "Pending",
                     tankPct,
                     tankRemarks,
                     tankImages,
@@ -1204,6 +1213,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
                     "MMS Structure Installation",
                     "mms",
                     mmsStatus,
+                    inst?.mms_status || "Pending",
                     mmsPct,
                     mmsRemarks,
                     mmsImages,
@@ -1223,6 +1233,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
                     "Solar Collectors Installation",
                     "collectors",
                     collStatus,
+                    inst?.collectors_status || "Pending",
                     collPct,
                     collRemarks,
                     collImages,
@@ -1242,6 +1253,7 @@ export default function InstallationDetailPage({ params }: PageProps) {
                     "Plumbing & Electrical Routing",
                     "plumbing",
                     plumbStatus,
+                    inst?.plumbing_status || "Pending",
                     plumbPct,
                     plumbRemarks,
                     plumbImages,
