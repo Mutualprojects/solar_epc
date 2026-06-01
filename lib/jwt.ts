@@ -3,8 +3,8 @@ import jwt from 'jsonwebtoken';
 const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
 
 export function signToken(payload: any) {
-  // Token expires in 1 day
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: '1d' });
+  // Token expires in 2 hours
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: '2h' });
 }
 
 export function verifyToken(token: string) {
