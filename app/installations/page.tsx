@@ -451,9 +451,54 @@ export default function InstallationsPage() {
         <div className="flex-1 overflow-hidden p-6 flex flex-col justify-between gap-6 min-h-0">
           
           {loading ? (
-            <div className="flex-1 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="w-9 h-9 text-emerald-600 animate-spin" />
-              <p className="text-xs font-black text-slate-455 uppercase tracking-widest">Retrieving installations data...</p>
+            <div className="flex-1 overflow-y-auto min-h-0 animate-pulse pr-1">
+              {viewMode === "grid" ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 pb-4">
+                  {Array.from({ length: 8 }).map((_, idx) => (
+                    <div
+                      key={idx}
+                      className="bg-white rounded-2xl border border-slate-200 p-4 flex flex-col justify-between gap-4 h-[220px]"
+                    >
+                      <div className="flex items-start justify-between">
+                        <div className="w-20 h-4 bg-slate-100 rounded" />
+                        <div className="w-16 h-4 bg-slate-100 rounded-full" />
+                      </div>
+                      <div className="space-y-2">
+                        <div className="h-4 bg-slate-200 rounded w-3/4" />
+                        <div className="h-3 bg-slate-100 rounded w-1/2" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between">
+                          <div className="w-16 h-3 bg-slate-100 rounded" />
+                          <div className="w-8 h-3 bg-slate-100 rounded" />
+                        </div>
+                        <div className="w-full bg-slate-100 h-2 rounded-full" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 border-t border-slate-100 pt-3">
+                        <div className="h-5 bg-slate-50 rounded" />
+                        <div className="h-5 bg-slate-50 rounded" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+                  <div className="p-4 bg-slate-50 border-b border-slate-200 flex gap-4">
+                    <div className="w-1/4 h-4 bg-slate-200 rounded" />
+                    <div className="w-1/4 h-4 bg-slate-200 rounded" />
+                    <div className="w-1/4 h-4 bg-slate-200 rounded" />
+                    <div className="w-1/4 h-4 bg-slate-200 rounded" />
+                  </div>
+                  {Array.from({ length: 5 }).map((_, idx) => (
+                    <div key={idx} className="p-4 border-b border-slate-100 flex gap-4">
+                      <div className="w-1/4 h-4 bg-slate-100 rounded" />
+                      <div className="w-1/4 h-4 bg-slate-100 rounded" />
+                      <div className="w-1/4 h-4 bg-slate-100 rounded" />
+                      <div className="w-1/4 h-4 bg-slate-100 rounded" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           ) : filteredInstallations.length === 0 ? (
             <div className="bg-white rounded-2xl border border-slate-150 shadow-sm p-16 flex flex-col items-center justify-center text-center gap-3 animate-fadeIn my-auto max-w-lg mx-auto w-full">

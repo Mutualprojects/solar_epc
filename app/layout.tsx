@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { DM_Sans } from "next/font/google";
 import "./globals.css";
+import { Preloader } from "@/components/ui/preloader";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -25,7 +26,11 @@ export default function RootLayout({
       className={`${dmSans.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col font-sans" suppressHydrationWarning>{children}</body>
+      <body className="min-h-full flex flex-col font-sans relative" suppressHydrationWarning>
+        <Preloader />
+        {children}
+      </body>
     </html>
   );
 }
+

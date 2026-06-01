@@ -1036,9 +1036,44 @@ export default function InstallationDetailPage({ params }: PageProps) {
           {/* Main Content Area */}
           <div className="px-4 md:px-6 py-6 space-y-6">
             {loading ? (
-              <div className="flex flex-col items-center justify-center gap-3 h-96">
-                <Loader2 className="w-10 h-10 text-emerald-600 animate-spin" />
-                <p className="text-xs font-black text-slate-500 uppercase tracking-wider">Loading site details...</p>
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-pulse">
+                {/* Left Skeleton Column */}
+                <div className="lg:col-span-4 space-y-6">
+                  <div className="bg-white border border-slate-200 rounded-2xl p-5 space-y-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-24 h-5 bg-slate-100 rounded-lg" />
+                      <div className="w-20 h-5 bg-slate-100 rounded-full" />
+                    </div>
+                    <div className="h-6 bg-slate-200 rounded w-3/4" />
+                    <div className="h-3 bg-slate-100 rounded w-1/3" />
+                    <div className="border-t border-slate-100 pt-3 space-y-2">
+                      <div className="h-3 bg-slate-100 rounded w-full" />
+                      <div className="h-3 bg-slate-100 rounded w-5/6" />
+                    </div>
+                  </div>
+                  <div className="bg-white border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center gap-4">
+                    <div className="w-36 h-36 rounded-full border-8 border-slate-100 flex items-center justify-center" />
+                    <div className="h-4 bg-slate-200 rounded w-24" />
+                  </div>
+                </div>
+
+                {/* Right Skeleton Column */}
+                <div className="lg:col-span-8 space-y-5">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="bg-white rounded-2xl border border-slate-200 p-5 space-y-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-8 h-8 rounded-lg bg-slate-100" />
+                          <div className="space-y-1">
+                            <div className="h-4 bg-slate-200 rounded w-32" />
+                            <div className="h-3 bg-slate-100 rounded w-20" />
+                          </div>
+                        </div>
+                        <div className="w-20 h-5 bg-slate-100 rounded-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             ) : !inst ? (
               <div className="bg-white rounded-2xl border border-slate-200 p-8 md:p-12 text-center max-w-md mx-auto shadow-sm">
