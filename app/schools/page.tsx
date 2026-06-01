@@ -69,6 +69,7 @@ export default function SchoolsPage() {
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedSchoolId, setSelectedSchoolId] = useState(""); // School Dropdown ID
   const [selectedSystemFilter, setSelectedSystemFilter] = useState(""); // System count filter
+  const [selectedStatus, setSelectedStatus] = useState("Completed"); // Default status filter to Completed
 
   // Pagination States (50 Records Per Page)
   const [currentPage, setCurrentPage] = useState(1);
@@ -127,10 +128,51 @@ export default function SchoolsPage() {
     }
   };
 
-  // Reset page when search or district filter changes
+  // Load saved filters on mount
+  useEffect(() => {
+    const savedDistrict = sessionStorage.getItem("school_district");
+    if (savedDistrict !== null) setSelectedDistrict(savedDistrict);
+
+    const savedSchool = sessionStorage.getItem("school_id");
+    if (savedSchool !== null) setSelectedSchoolId(savedSchool);
+
+    const savedSystem = sessionStorage.getItem("school_system");
+    if (savedSystem !== null) setSelectedSystemFilter(savedSystem);
+
+    const savedStatus = sessionStorage.getItem("school_status");
+    if (savedStatus !== null) {
+      setSelectedStatus(savedStatus);
+    } else {
+      setSelectedStatus("Completed");
+    }
+
+    const savedSearch = sessionStorage.getItem("school_search");
+    if (savedSearch !== null) setSearchTerm(savedSearch);
+
+    const savedPage = sessionStorage.getItem("school_page");
+    if (savedPage) setCurrentPage(parseInt(savedPage, 10));
+
+    const savedView = sessionStorage.getItem("school_view");
+    if (savedView === "grid" || savedView === "list" || savedView === "table" || savedView === "kanban") {
+      setViewMode(savedView as any);
+    }
+  }, []);
+
+  // Save filters on change
+  useEffect(() => {
+    sessionStorage.setItem("school_district", selectedDistrict);
+    sessionStorage.setItem("school_id", selectedSchoolId);
+    sessionStorage.setItem("school_system", selectedSystemFilter);
+    sessionStorage.setItem("school_status", selectedStatus);
+    sessionStorage.setItem("school_search", searchTerm);
+    sessionStorage.setItem("school_page", currentPage.toString());
+    sessionStorage.setItem("school_view", viewMode);
+  }, [selectedDistrict, selectedSchoolId, selectedSystemFilter, selectedStatus, searchTerm, currentPage, viewMode]);
+
+  // Reset page when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedDistrict, selectedSchoolId, selectedSystemFilter]);
+  }, [searchTerm, selectedDistrict, selectedSchoolId, selectedSystemFilter, selectedStatus]);
 
   // When District changes, reset selected School ID
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -173,7 +215,15 @@ export default function SchoolsPage() {
         matchesSystem = (s.no_of_systems || 0) >= 4;
       }
 
-      return matchesDistrict && matchesSchoolId && matchesSearch && matchesSystem;
+      // E. Matches Status Filter
+      let matchesStatus = true;
+      if (selectedStatus) {
+        const inst = installations.find(i => i.school_id === s.id);
+        const overallStatus = inst?.overall_status || "Pending";
+        matchesStatus = overallStatus.toLowerCase() === selectedStatus.toLowerCase();
+      }
+
+      return matchesDistrict && matchesSchoolId && matchesSearch && matchesSystem && matchesStatus;
     })
     .sort((a, b) => {
       const getPriority = (schoolId: string) => {
@@ -245,6 +295,7 @@ export default function SchoolsPage() {
     setSelectedDistrict("");
     setSelectedSchoolId("");
     setSelectedSystemFilter("");
+    setSelectedStatus("");
     handleCloseDrawer();
   };
 
@@ -368,8 +419,22 @@ export default function SchoolsPage() {
               </select>
             </div>
 
+            {/* Installation Status dropdown */}
+            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-sm w-44 shrink-0">
+              <select
+                value={selectedStatus}
+                onChange={(e) => setSelectedStatus(e.target.value)}
+                className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none pr-6 cursor-pointer uppercase font-['DM_Sans'] focus:ring-0 focus:outline-none w-full truncate"
+              >
+                <option value="">ALL STATUSES</option>
+                <option value="Completed">Completed</option>
+                <option value="In Progress">In Progress</option>
+                <option value="Pending">Pending</option>
+              </select>
+            </div>
+
             {/* Reset Filters button */}
-            {(searchTerm || selectedDistrict || selectedSchoolId || selectedSystemFilter) && (
+            {(searchTerm || selectedDistrict || selectedSchoolId || selectedSystemFilter || selectedStatus) && (
               <button
                 onClick={handleResetFilters}
                 className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1 uppercase tracking-wider shadow-sm shrink-0"
