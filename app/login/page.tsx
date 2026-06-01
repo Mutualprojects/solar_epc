@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, Sun, Loader2 } from "lucide-react";
+import { Mail, Lock, ArrowRight, Sun, Loader2, Eye, EyeOff } from "lucide-react";
 import Image from "next/image";
 
 export default function LoginPage() {
     const router = useRouter();
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [showPassword, setShowPassword] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState("");
 
@@ -218,6 +219,24 @@ export default function LoginPage() {
         }
        
         .input-wrap:focus-within .input-icon {
+          color: #10b981;
+        }
+ 
+        .toggle-password {
+          position: absolute;
+          right: 14px;
+          top: 50%;
+          transform: translateY(-50%);
+          color: #94a3b8;
+          cursor: pointer;
+          transition: color 0.2s;
+          background: none;
+          border: none;
+          padding: 0;
+          display: flex;
+        }
+        
+        .toggle-password:hover {
           color: #10b981;
         }
  
@@ -471,13 +490,20 @@ export default function LoginPage() {
                                         <Lock size={18} />
                                     </span>
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         required
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         className="input-field"
                                         placeholder="••••••••••••"
                                     />
+                                    <button 
+                                        type="button" 
+                                        className="toggle-password"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                    >
+                                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                                    </button>
                                 </div>
                             </div>
 
