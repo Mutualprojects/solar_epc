@@ -68,6 +68,7 @@ export default function SchoolsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedDistrict, setSelectedDistrict] = useState("");
   const [selectedSchoolId, setSelectedSchoolId] = useState(""); // School Dropdown ID
+  const [selectedSystemFilter, setSelectedSystemFilter] = useState(""); // System count filter
 
   // Pagination States (50 Records Per Page)
   const [currentPage, setCurrentPage] = useState(1);
@@ -129,7 +130,7 @@ export default function SchoolsPage() {
   // Reset page when search or district filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, selectedDistrict, selectedSchoolId]);
+  }, [searchTerm, selectedDistrict, selectedSchoolId, selectedSystemFilter]);
 
   // When District changes, reset selected School ID
   const handleDistrictChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -160,7 +161,19 @@ export default function SchoolsPage() {
       const pin = (s.pin_code || "").toLowerCase();
       const matchesSearch = !searchTerm || name.includes(search) || sid.includes(search) || pin.includes(search);
 
-      return matchesDistrict && matchesSchoolId && matchesSearch;
+      // D. Matches System Filter (1 single system, 2 double systems, etc.)
+      let matchesSystem = true;
+      if (selectedSystemFilter === "1") {
+        matchesSystem = s.no_of_systems === 1;
+      } else if (selectedSystemFilter === "2") {
+        matchesSystem = s.no_of_systems === 2;
+      } else if (selectedSystemFilter === "3") {
+        matchesSystem = s.no_of_systems === 3;
+      } else if (selectedSystemFilter === "4+") {
+        matchesSystem = (s.no_of_systems || 0) >= 4;
+      }
+
+      return matchesDistrict && matchesSchoolId && matchesSearch && matchesSystem;
     })
     .sort((a, b) => {
       const getPriority = (schoolId: string) => {
@@ -231,6 +244,7 @@ export default function SchoolsPage() {
     setSearchTerm("");
     setSelectedDistrict("");
     setSelectedSchoolId("");
+    setSelectedSystemFilter("");
     handleCloseDrawer();
   };
 
@@ -339,8 +353,23 @@ export default function SchoolsPage() {
               </select>
             </div>
 
+            {/* System Count dropdown (1 single system, 2 double systems, etc.) */}
+            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-sm w-48 shrink-0">
+              <select
+                value={selectedSystemFilter}
+                onChange={(e) => setSelectedSystemFilter(e.target.value)}
+                className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none pr-6 cursor-pointer uppercase font-['DM_Sans'] focus:ring-0 focus:outline-none w-full truncate"
+              >
+                <option value="">ALL SYSTEMS</option>
+                <option value="1">1 SINGLE SYSTEM</option>
+                <option value="2">2 DOUBLE SYSTEMS</option>
+                <option value="3">3 SYSTEMS</option>
+                <option value="4+">4+ SYSTEMS</option>
+              </select>
+            </div>
+
             {/* Reset Filters button */}
-            {(searchTerm || selectedDistrict || selectedSchoolId) && (
+            {(searchTerm || selectedDistrict || selectedSchoolId || selectedSystemFilter) && (
               <button
                 onClick={handleResetFilters}
                 className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1 uppercase tracking-wider shadow-sm shrink-0"
