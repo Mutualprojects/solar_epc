@@ -98,14 +98,14 @@ function SidebarContent({
     <div className="flex h-full flex-col bg-white">
 
       {/* ── Logo Header ── */}
-      <div className="group flex h-[80px] shrink-0 items-center gap-4 border-b border-slate-100/80 bg-white/80 px-5 transition-all">
+      <div className="group flex h-[96px] shrink-0 items-center gap-4 border-b border-slate-100/80 bg-white/80 px-5 transition-all">
         {/* Logo Container with Glow & Gradient Border */}
-        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 p-[2px] shadow-lg shadow-emerald-500/20 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/30">
-          <div className="h-full w-full overflow-hidden rounded-[10px] bg-white">
+        <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 p-[2px] shadow-lg shadow-emerald-500/20 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/30">
+          <div className="h-full w-full flex items-center justify-center overflow-hidden rounded-[10px] bg-white">
             <img
               src="/solar-panel-installation-workers-with-safety-gear-bright-sun-vector-illustration.png"
               alt="APMS Logo"
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+              className="h-full w-full object-contain p-1 transition-transform duration-500 group-hover:scale-110"
             />
           </div>
           {/* Subtle Outer Glow */}
