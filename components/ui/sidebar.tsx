@@ -99,11 +99,11 @@ function SidebarContent({
 
       {/* ── Logo Header ── */}
       <div className="flex h-[72px] shrink-0 items-center gap-3 border-b border-slate-100 px-4">
-        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-500 shadow-sm shadow-emerald-500/20">
-          <Sun className="h-5 w-5 text-white" strokeWidth={2.5} />
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-slate-200 shadow-sm">
+          <img src="/solar-panel-installation-workers-with-safety-gear-bright-sun-vector-illustration.png" alt="APMS Logo" className="h-full w-full object-cover" />
         </div>
-        <span className="text-base font-extrabold tracking-tight text-slate-800 whitespace-nowrap">
-          Solar<span className="text-emerald-500">EPC</span>
+        <span className="text-xl font-extrabold tracking-tight text-slate-800 whitespace-nowrap uppercase">
+          APMS
         </span>
         {/* Close button — mobile only */}
         {showClose && (
