@@ -98,18 +98,35 @@ function SidebarContent({
     <div className="flex h-full flex-col bg-white">
 
       {/* ── Logo Header ── */}
-      <div className="flex h-[72px] shrink-0 items-center gap-3 border-b border-slate-100 px-4">
-        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl overflow-hidden border border-slate-200 shadow-sm">
-          <img src="/solar-panel-installation-workers-with-safety-gear-bright-sun-vector-illustration.png" alt="APMS Logo" className="h-full w-full object-cover" />
+      <div className="group flex h-[80px] shrink-0 items-center gap-4 border-b border-slate-100/80 bg-white/80 px-5 transition-all">
+        {/* Logo Container with Glow & Gradient Border */}
+        <div className="relative flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 p-[2px] shadow-lg shadow-emerald-500/20 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/30">
+          <div className="h-full w-full overflow-hidden rounded-[10px] bg-white">
+            <img
+              src="/solar-panel-installation-workers-with-safety-gear-bright-sun-vector-illustration.png"
+              alt="APMS Logo"
+              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+            />
+          </div>
+          {/* Subtle Outer Glow */}
+          <div className="absolute inset-0 -z-10 rounded-xl bg-emerald-400 opacity-20 blur-md transition-opacity duration-300 group-hover:opacity-50"></div>
         </div>
-        <span className="text-xl font-extrabold tracking-tight text-slate-800 whitespace-nowrap uppercase">
-          APMS
-        </span>
+
+        {/* Brand Name */}
+        <div className="flex flex-col justify-center overflow-hidden">
+          <span className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600 transition-all duration-300 group-hover:from-emerald-700 group-hover:to-teal-600">
+            APMS & KGBV
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600/80 -mt-1 transition-all duration-300 group-hover:text-emerald-500">
+            Solar EPC
+          </span>
+        </div>
+
         {/* Close button — mobile only */}
         {showClose && (
           <button
             onClick={onClose}
-            className="ml-auto flex h-8 w-8 items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 transition-all"
+            className="ml-auto flex h-9 w-9 items-center justify-center rounded-xl bg-slate-50 text-slate-400 hover:bg-red-50 hover:text-red-500 hover:border-red-100 transition-all shadow-sm border border-slate-100"
           >
             <X className="h-5 w-5" />
           </button>
