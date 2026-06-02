@@ -98,26 +98,26 @@ function SidebarContent({
     <div className="flex h-full flex-col bg-white">
 
       {/* ── Logo Header ── */}
-      <div className="group flex h-[96px] shrink-0 items-center gap-4 border-b border-slate-100/80 bg-white/80 px-5 transition-all">
+      <div className="group flex h-[84px] shrink-0 items-center gap-3 border-b border-slate-100/80 bg-white/80 px-4 transition-all">
         {/* Logo Container with Glow & Gradient Border */}
-        <div className="relative flex h-16 w-16 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 p-[2px] shadow-lg shadow-emerald-500/20 transition-transform duration-300 group-hover:scale-105 group-hover:shadow-emerald-500/30">
+        <div className="relative flex h-14 w-14 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-teal-600 p-[2px] shadow-sm transition-transform duration-300 group-hover:scale-105">
           <div className="h-full w-full flex items-center justify-center overflow-hidden rounded-[10px] bg-white">
             <img
-              src="/solar-panel-installation-workers-with-safety-gear-bright-sun-vector-illustration.png"
+              src="/apms-logo.png"
               alt="APMS Logo"
               className="h-full w-full object-contain p-1 transition-transform duration-500 group-hover:scale-110"
             />
           </div>
           {/* Subtle Outer Glow */}
-          <div className="absolute inset-0 -z-10 rounded-xl bg-emerald-400 opacity-20 blur-md transition-opacity duration-300 group-hover:opacity-50"></div>
+          <div className="absolute inset-0 -z-10 rounded-xl bg-emerald-400 opacity-20 blur-sm transition-opacity duration-300 group-hover:opacity-40"></div>
         </div>
 
         {/* Brand Name */}
         <div className="flex flex-col justify-center overflow-hidden">
-          <span className="text-2xl font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600 transition-all duration-300 group-hover:from-emerald-700 group-hover:to-teal-600">
+          <span className="text-lg font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-slate-800 to-slate-600 transition-all duration-300 group-hover:from-emerald-700 group-hover:to-teal-600 whitespace-nowrap">
             APMS & KGBV
           </span>
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-emerald-600/80 -mt-1 transition-all duration-300 group-hover:text-emerald-500">
+          <span className="text-[10px] font-bold uppercase tracking-widest text-emerald-600/80 transition-all duration-300 group-hover:text-emerald-500">
             Solar EPC
           </span>
         </div>
