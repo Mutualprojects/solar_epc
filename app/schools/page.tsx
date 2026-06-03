@@ -19,6 +19,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -412,60 +413,63 @@ export default function SchoolsPage() {
           <div className="flex items-center gap-3 shrink-0">
 
             {/* District dropdown (Label Removed) */}
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-sm w-44 shrink-0">
-              <select
+            <div className="w-44 shrink-0">
+              <SearchableSelect
                 value={selectedDistrict}
-                onChange={handleDistrictChange}
-                className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none pr-6 cursor-pointer uppercase font-['DM_Sans'] focus:ring-0 focus:outline-none w-full truncate"
-              >
-                <option value="">ALL DISTRICTS</option>
-                {districts.map(d => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
+                onChange={(val) => {
+                  setSelectedDistrict(val);
+                  setSelectedSchoolId("");
+                }}
+                placeholder="ALL DISTRICTS"
+                options={[
+                  { value: "", label: "ALL DISTRICTS" },
+                  ...districts.map(d => ({ value: d, label: d }))
+                ]}
+              />
             </div>
 
             {/* School dropdown (Label Removed) */}
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-sm w-56 shrink-0">
-              <select
+            <div className="w-56 shrink-0">
+              <SearchableSelect
                 value={selectedSchoolId}
-                onChange={(e) => setSelectedSchoolId(e.target.value)}
-                className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none pr-6 cursor-pointer uppercase font-['DM_Sans'] focus:ring-0 focus:outline-none w-full truncate"
-              >
-                <option value="">ALL SCHOOLS</option>
-                {dropdownFilteredSchools.map(s => (
-                  <option key={s.id} value={s.id}>{s.kgbv_name.toUpperCase()}</option>
-                ))}
-              </select>
+                onChange={(val) => setSelectedSchoolId(val)}
+                placeholder="ALL SCHOOLS"
+                options={[
+                  { value: "", label: "ALL SCHOOLS" },
+                  ...dropdownFilteredSchools.map(s => ({ value: s.id, label: s.kgbv_name.toUpperCase() }))
+                ]}
+              />
             </div>
 
             {/* System Count dropdown (1 single system, 2 double systems, etc.) */}
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-sm w-48 shrink-0">
-              <select
+            <div className="w-48 shrink-0">
+              <SearchableSelect
                 value={selectedSystemFilter}
-                onChange={(e) => setSelectedSystemFilter(e.target.value)}
-                className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none pr-6 cursor-pointer uppercase font-['DM_Sans'] focus:ring-0 focus:outline-none w-full truncate"
-              >
-                <option value="">ALL SYSTEMS</option>
-                <option value="1">1 SINGLE SYSTEM</option>
-                <option value="2">2 DOUBLE SYSTEMS</option>
-                <option value="3">3 SYSTEMS</option>
-                <option value="4+">4+ SYSTEMS</option>
-              </select>
+                onChange={(val) => setSelectedSystemFilter(val)}
+                placeholder="ALL SYSTEMS"
+                options={[
+                  { value: "", label: "ALL SYSTEMS" },
+                  { value: "1", label: "1 SINGLE SYSTEM" },
+                  { value: "2", label: "2 DOUBLE SYSTEMS" },
+                  { value: "3", label: "3 SYSTEMS" },
+                  { value: "4+", label: "4+ SYSTEMS" },
+                ]}
+              />
             </div>
 
             {/* Installation Status dropdown */}
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 shadow-sm w-44 shrink-0">
-              <select
+            <div className="w-44 shrink-0">
+              <SearchableSelect
                 value={selectedStatus}
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none pr-6 cursor-pointer uppercase font-['DM_Sans'] focus:ring-0 focus:outline-none w-full truncate"
-              >
-                <option value="">ALL STATUSES</option>
-                <option value="Completed">Completed</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Pending">Pending</option>
-              </select>
+                onChange={(val) => setSelectedStatus(val)}
+                placeholder="ALL STATUSES"
+                options={[
+                  { value: "", label: "ALL STATUSES" },
+                  { value: "Completed", label: "COMPLETED" },
+                  { value: "In Progress", label: "IN PROGRESS" },
+                  { value: "Pending", label: "PENDING" },
+                ]}
+              />
             </div>
 
             {/* Reset Filters button */}

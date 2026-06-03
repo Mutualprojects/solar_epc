@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { SearchableSelect } from "@/components/ui/searchable-select";
 
 const dmSans = DM_Sans({
   subsets: ["latin"],
@@ -371,49 +372,45 @@ export default function InstallationsPage() {
           <div className="flex flex-wrap items-center gap-3 xl:justify-end">
             
             {/* District Filter */}
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 gap-1.5 shadow-sm">
-              <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider shrink-0">District:</span>
-              <select 
-                value={selectedDistrict} 
-                onChange={(e) => { setSelectedDistrict(e.target.value); setSelectedSchoolId(""); }}
-                className="bg-transparent border-none text-[11px] font-bold text-slate-700 outline-none pr-1 cursor-pointer uppercase font-['DM_Sans'] focus:ring-0 focus:outline-none"
-              >
-                <option value="">ALL DISTRICTS</option>
-                {districts.map(d => (
-                  <option key={d} value={d}>{d}</option>
-                ))}
-              </select>
+            <div className="w-48 shrink-0">
+              <SearchableSelect
+                value={selectedDistrict}
+                onChange={(val) => { setSelectedDistrict(val); setSelectedSchoolId(""); }}
+                placeholder="DISTRICT"
+                options={[
+                  { value: "", label: "ALL DISTRICTS" },
+                  ...districts.map(d => ({ value: d, label: d }))
+                ]}
+              />
             </div>
 
             {/* School Filter */}
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 gap-1.5 shadow-sm max-w-[200px]">
-              <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider shrink-0">School:</span>
-              <select 
-                value={selectedSchoolId} 
-                onChange={(e) => setSelectedSchoolId(e.target.value)}
-                className="bg-transparent border-none text-[11px] font-bold text-slate-700 outline-none pr-1 cursor-pointer uppercase truncate font-['DM_Sans'] focus:ring-0 focus:outline-none max-w-[120px]"
-              >
-                <option value="">ALL SCHOOLS</option>
-                {dropdownFilteredSchools.map(s => (
-                  <option key={s.id} value={s.id}>{s.kgbv_name.toUpperCase()}</option>
-                ))}
-              </select>
+            <div className="w-56 shrink-0">
+              <SearchableSelect
+                value={selectedSchoolId}
+                onChange={(val) => setSelectedSchoolId(val)}
+                placeholder="SCHOOL"
+                options={[
+                  { value: "", label: "ALL SCHOOLS" },
+                  ...dropdownFilteredSchools.map(s => ({ value: s.id, label: s.kgbv_name.toUpperCase() }))
+                ]}
+              />
             </div>
 
             {/* Status Filter */}
-            <div className="flex items-center bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 gap-1.5 shadow-sm">
-              <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider shrink-0">Status:</span>
-              <select 
-                value={selectedStatus} 
-                onChange={(e) => setSelectedStatus(e.target.value)}
-                className="bg-transparent border-none text-[11px] font-bold text-slate-700 outline-none pr-1 cursor-pointer uppercase font-['DM_Sans'] focus:ring-0 focus:outline-none"
-              >
-                <option value="">ALL STATUSES</option>
-                <option value="Pending">Pending</option>
-                <option value="In Progress">In Progress</option>
-                <option value="Completed">Completed</option>
-                <option value="Suspended">Suspended</option>
-              </select>
+            <div className="w-48 shrink-0">
+              <SearchableSelect
+                value={selectedStatus}
+                onChange={(val) => setSelectedStatus(val)}
+                placeholder="STATUS"
+                options={[
+                  { value: "", label: "ALL STATUSES" },
+                  { value: "Pending", label: "PENDING" },
+                  { value: "In Progress", label: "IN PROGRESS" },
+                  { value: "Completed", label: "COMPLETED" },
+                  { value: "Suspended", label: "SUSPENDED" },
+                ]}
+              />
             </div>
 
             {/* Clear Button */}
@@ -700,33 +697,23 @@ export default function InstallationsPage() {
               {/* Select School */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Select School *</label>
-                <select
-                  required
+                <SearchableSelect
                   value={newSchoolId}
-                  onChange={(e) => setNewSchoolId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl p-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500/10 outline-none transition-all uppercase font-['DM_Sans']"
-                >
-                  <option value="">-- CHOOSE SCHOOL --</option>
-                  {schools.map(s => (
-                    <option key={s.id} value={s.id}>{s.kgbv_name.toUpperCase()} ({s.district.toUpperCase()})</option>
-                  ))}
-                </select>
+                  onChange={(val) => setNewSchoolId(val)}
+                  placeholder="-- CHOOSE SCHOOL --"
+                  options={schools.map(s => ({ value: s.id, label: `${s.kgbv_name.toUpperCase()} (${s.district.toUpperCase()})` }))}
+                />
               </div>
 
               {/* Select Material */}
               <div className="flex flex-col gap-1.5">
                 <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider">Select Material Record *</label>
-                <select
-                  required
+                <SearchableSelect
                   value={newMaterialId}
-                  onChange={(e) => setNewMaterialId(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 focus:border-emerald-500 rounded-xl p-2.5 text-xs font-bold text-slate-700 focus:ring-2 focus:ring-emerald-500/10 outline-none transition-all uppercase font-['DM_Sans']"
-                >
-                  <option value="">-- CHOOSE MATERIAL --</option>
-                  {materials.map(m => (
-                    <option key={m.id} value={m.id}>{m.material_code.toUpperCase()} ({m.capacity || "CAPACITY UNKNOWN"})</option>
-                  ))}
-                </select>
+                  onChange={(val) => setNewMaterialId(val)}
+                  placeholder="-- CHOOSE MATERIAL --"
+                  options={materials.map(m => ({ value: m.id, label: `${m.material_code.toUpperCase()} (${m.capacity || "CAPACITY UNKNOWN"})` }))}
+                />
               </div>
 
               {/* Installation Code */}
