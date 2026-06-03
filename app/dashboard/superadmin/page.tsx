@@ -113,6 +113,111 @@ export default function SuperAdminDashboard() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 15;
 
+  // Off-canvas drawer states for KPI details
+  const [selectedKpiDetails, setSelectedKpiDetails] = useState<{
+    type: string;
+    title: string;
+    description: string;
+    colorClass: string;
+  } | null>(null);
+  const [kpiDrawerOpen, setKpiDrawerOpen] = useState(false);
+  const [kpiSearchQuery, setKpiSearchQuery] = useState("");
+
+  const handleOpenKpiDrawer = (type: string, title: string, description: string, colorClass: string) => {
+    setKpiSearchQuery("");
+    setSelectedKpiDetails({ type, title, description, colorClass });
+    setTimeout(() => setKpiDrawerOpen(true), 10);
+  };
+
+  const handleCloseKpiDrawer = () => {
+    setKpiDrawerOpen(false);
+    setTimeout(() => setSelectedKpiDetails(null), 300);
+  };
+
+  const getKpiRecords = (type: string) => {
+    switch (type) {
+      case "total_installed":
+        return installations.filter(x => x.overall_status === 'Completed');
+      case "pending_installations":
+        return installations.filter(x => x.overall_status !== 'Completed');
+      case "total_schools":
+        return installations;
+      case "total_systems":
+        return installations;
+      case "tank_completed":
+        return installations.filter(x => x.tank_status === 'Completed');
+      case "mms_completed":
+        return installations.filter(x => x.mms_status === 'Completed');
+      case "collectors_completed":
+        return installations.filter(x => x.collectors_status === 'Completed');
+      case "plumbing_completed":
+        return installations.filter(x => x.plumbing_status === 'Completed');
+      default:
+        return [];
+    }
+  };
+
+  const renderKpiIcon = (type: string, className = "w-6 h-6") => {
+    switch (type) {
+      case "total_installed":
+        return <CheckCircle2 className={`${className} text-emerald-600`} />;
+      case "pending_installations":
+        return <Clock className={`${className} text-indigo-600`} />;
+      case "total_schools":
+        return <School className={`${className} text-cyan-600`} />;
+      case "total_systems":
+        return <Zap className={`${className} text-blue-600`} />;
+      case "tank_completed":
+        return <Package className={`${className} text-sky-600`} />;
+      case "mms_completed":
+        return <Zap className={`${className} text-amber-600`} />;
+      case "collectors_completed":
+        return <Grid className={`${className} text-violet-600`} />;
+      case "plumbing_completed":
+        return <Wrench className={`${className} text-emerald-650`} />;
+      default:
+        return <Info className={`${className} text-slate-500`} />;
+    }
+  };
+
+  const kpiRecords = selectedKpiDetails ? getKpiRecords(selectedKpiDetails.type) : [];
+  const filteredKpiRecords = kpiRecords.filter((item: any) => {
+    if (!kpiSearchQuery) return true;
+    const query = kpiSearchQuery.trim().toLowerCase();
+    const schoolName = item.schools?.kgbv_name?.toLowerCase() || "";
+    const schoolCode = item.schools?.school_id?.toLowerCase() || "";
+    const district = item.schools?.district?.toLowerCase() || "";
+    const instCode = item.installation_code?.toLowerCase() || "";
+    return schoolName.includes(query) || schoolCode.includes(query) || district.includes(query) || instCode.includes(query);
+  });
+
+  const drawerTotalSystems = filteredKpiRecords.reduce((acc, curr) => acc + (getSystemCount ? getSystemCount(curr) : 1), 0);
+
+  const getDrawerPieData = () => {
+    let completed = 0;
+    let inProgress = 0;
+    let pending = 0;
+    let suspended = 0;
+
+    filteredKpiRecords.forEach((item: any) => {
+      const status = item.overall_status?.toLowerCase() || 'pending';
+      if (status === 'completed') completed++;
+      else if (status === 'in progress') inProgress++;
+      else if (status === 'suspended') suspended++;
+      else pending++;
+    });
+
+    const data = [];
+    if (completed > 0) data.push({ name: 'Completed', value: completed, color: '#0d9488' });
+    if (inProgress > 0) data.push({ name: 'In Progress', value: inProgress, color: '#f59e0b' });
+    if (suspended > 0) data.push({ name: 'Suspended', value: suspended, color: '#ef4444' });
+    if (pending > 0) data.push({ name: 'Pending', value: pending, color: '#6366f1' });
+
+    return data;
+  };
+
+  const drawerPieData = getDrawerPieData();
+
   // 1. Auth check
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -590,7 +695,15 @@ export default function SuperAdminDashboard() {
               ) : (
                 <>
                   {/* Card 1: Total Installed */}
-                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-emerald-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div 
+                    onClick={() => handleOpenKpiDrawer(
+                      "total_installed",
+                      "Total Installed",
+                      "All installation sites where the overall status is marked as Completed.",
+                      "bg-emerald-500"
+                    )}
+                    className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-emerald-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+                  >
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
                       <CheckCircle2 className="w-16 h-16 text-emerald-600" />
                     </div>
@@ -609,7 +722,15 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 2: Pending Installations */}
-                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-indigo-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div 
+                    onClick={() => handleOpenKpiDrawer(
+                      "pending_installations",
+                      "Pending Installations",
+                      "Sites that are currently pending, suspended, or in progress.",
+                      "bg-indigo-500"
+                    )}
+                    className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-indigo-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-indigo-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+                  >
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
                       <Clock className="w-16 h-16 text-indigo-600" />
                     </div>
@@ -628,7 +749,15 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 3: Total Schools */}
-                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-cyan-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-cyan-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div 
+                    onClick={() => handleOpenKpiDrawer(
+                      "total_schools",
+                      "Total Schools",
+                      "All registered schools in the solar electrification network.",
+                      "bg-cyan-500"
+                    )}
+                    className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-cyan-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-cyan-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+                  >
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
                       <School className="w-16 h-16 text-cyan-600" />
                     </div>
@@ -644,7 +773,15 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 4: Total Systems */}
-                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-blue-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div 
+                    onClick={() => handleOpenKpiDrawer(
+                      "total_systems",
+                      "Total Systems",
+                      "All solar systems distributed across the installation sites.",
+                      "bg-blue-500"
+                    )}
+                    className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-blue-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-blue-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+                  >
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
                       <Zap className="w-16 h-16 text-blue-600" />
                     </div>
@@ -660,7 +797,15 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 5: Tank Completed */}
-                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-sky-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-sky-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div 
+                    onClick={() => handleOpenKpiDrawer(
+                      "tank_completed",
+                      "Tanks Completed",
+                      "Sites where the water tank installation sub-system is completed.",
+                      "bg-sky-500"
+                    )}
+                    className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-sky-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-sky-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+                  >
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
                       <Package className="w-16 h-16 text-sky-600" />
                     </div>
@@ -676,7 +821,15 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 6: MMS Completed */}
-                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-amber-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-amber-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div 
+                    onClick={() => handleOpenKpiDrawer(
+                      "mms_completed",
+                      "MMS Completed",
+                      "Sites where the module mounting structure (MMS) is completed.",
+                      "bg-amber-500"
+                    )}
+                    className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-amber-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-amber-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+                  >
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
                       <Zap className="w-16 h-16 text-amber-600" />
                     </div>
@@ -692,7 +845,15 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 7: Collectors Completed */}
-                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-violet-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-violet-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div 
+                    onClick={() => handleOpenKpiDrawer(
+                      "collectors_completed",
+                      "Collectors Completed",
+                      "Sites where the solar collector panels have been mounted.",
+                      "bg-violet-500"
+                    )}
+                    className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-violet-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-violet-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+                  >
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
                       <Grid className="w-16 h-16 text-violet-600" />
                     </div>
@@ -708,7 +869,15 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 8: Plumbing Completed */}
-                  <div className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-emerald-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group">
+                  <div 
+                    onClick={() => handleOpenKpiDrawer(
+                      "plumbing_completed",
+                      "Plumbing Completed",
+                      "Sites where high-pressure plumbing connections are completed.",
+                      "bg-emerald-500"
+                    )}
+                    className="bg-white rounded-2xl p-4 pb-3 border-l-4 border-l-emerald-500 border border-slate-200/70 shadow-sm hover:shadow-lg hover:shadow-emerald-500/5 hover:-translate-y-1 transition-all duration-300 relative overflow-hidden group cursor-pointer"
+                  >
                     <div className="absolute -top-3 -right-3 p-4 opacity-5 group-hover:opacity-10 group-hover:scale-125 transition-all duration-300">
                       <Wrench className="w-16 h-16 text-emerald-600" />
                     </div>
@@ -830,6 +999,238 @@ export default function SuperAdminDashboard() {
 
         </div>
       </main>
+
+      {/* ── KPI DETAILS OFF-CANVAS SIDE PANEL (Sliding Drawer) ── */}
+      {selectedKpiDetails && (
+        <div className="fixed inset-0 z-50 flex justify-end select-none">
+          {/* Backdrop overlay */}
+          <div 
+            onClick={handleCloseKpiDrawer}
+            className={`fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity duration-300 ease-in-out ${
+              kpiDrawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+            }`}
+          />
+
+          {/* Drawer Panel content */}
+          <div 
+            className={`relative w-full md:w-[850px] bg-[#f8fafc] h-full shadow-2xl border-l border-slate-200/80 flex flex-col z-50 transform transition-transform duration-300 ease-out ${
+              kpiDrawerOpen ? "translate-x-0" : "translate-x-full"
+            }`}
+          >
+            {/* Header */}
+            <div className="px-6 py-5 bg-gradient-to-r from-slate-800 to-slate-950 text-white flex items-center justify-between shadow-md shrink-0 animate-fadeIn">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center border border-white/10 shrink-0">
+                  {renderKpiIcon(selectedKpiDetails.type, "w-5 h-5 text-white")}
+                </div>
+                <div>
+                  <h3 className="text-xs font-black uppercase tracking-wider font-['DM_Sans'] text-left">
+                    {selectedKpiDetails.title}
+                  </h3>
+                  <p className="text-[10px] text-slate-350 font-medium lowercase tracking-wide mt-0.5 text-left">
+                    {selectedKpiDetails.description}
+                  </p>
+                </div>
+              </div>
+              <button 
+                onClick={handleCloseKpiDrawer}
+                className="p-1.5 hover:bg-white/10 rounded-xl transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5 text-white" />
+              </button>
+            </div>
+
+            {/* Split layout for Analytics & School List */}
+            <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
+              
+              {/* Left Column: Analytics (collapsible/responsive) */}
+              <div className="w-full md:w-[320px] bg-slate-50 border-r border-slate-200 p-6 flex flex-col gap-4 overflow-y-auto shrink-0 select-none">
+                <div>
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider mb-2">Metrics Summary</h4>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase">Schools</p>
+                      <p className="text-lg font-black text-slate-800">{filteredKpiRecords.length}</p>
+                    </div>
+                    <div className="bg-white rounded-xl p-3 border border-slate-200 shadow-sm">
+                      <p className="text-[9px] font-bold text-slate-400 uppercase">Systems</p>
+                      <p className="text-lg font-black text-slate-800">{drawerTotalSystems}</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col gap-3">
+                  <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Status Distribution</h4>
+                  
+                  {drawerPieData.length === 0 ? (
+                    <div className="h-[180px] flex items-center justify-center text-slate-400 text-xs font-bold">
+                      No Records Available
+                    </div>
+                  ) : (
+                    <>
+                      <div className="h-[160px] w-full flex justify-center items-center relative">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={drawerPieData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={45}
+                              outerRadius={65}
+                              paddingAngle={3}
+                              dataKey="value"
+                            >
+                              {drawerPieData.map((entry: any, index: number) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip
+                              contentStyle={{
+                                borderRadius: '12px',
+                                border: 'none',
+                                boxShadow: '0 8px 24px rgba(0,0,0,0.08)',
+                                fontWeight: 'bold',
+                                fontSize: '10px',
+                                fontFamily: 'DM Sans'
+                              }}
+                            />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </div>
+
+                      <div className="flex flex-col gap-2 border-t border-slate-100 pt-3">
+                        {drawerPieData.map((entry: any) => {
+                          const percentage = Math.round((entry.value / filteredKpiRecords.length) * 100);
+                          return (
+                            <div key={entry.name} className="flex items-center justify-between text-[10px] font-bold">
+                              <div className="flex items-center gap-2">
+                                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: entry.color }}></span>
+                                <span className="uppercase tracking-wider text-slate-450">{entry.name}</span>
+                              </div>
+                              <span className="font-extrabold text-slate-700">
+                                {entry.value} ({percentage}%)
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Right Column: Interactive Search and School List */}
+              <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
+                
+                {/* Search / filter box */}
+                <div className="border-b border-slate-100 px-6 py-4 flex flex-col gap-2.5 shrink-0">
+                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 shadow-sm w-full">
+                    <Search className="w-4 h-4 text-slate-400 shrink-0" />
+                    <input
+                      type="text"
+                      value={kpiSearchQuery}
+                      onChange={(e) => setKpiSearchQuery(e.target.value)}
+                      placeholder="Filter list by school or district..."
+                      className="bg-transparent border-none text-xs font-bold text-slate-700 outline-none placeholder:text-slate-400 placeholder:uppercase focus:ring-0 focus:outline-none w-full"
+                    />
+                    {kpiSearchQuery && (
+                      <button onClick={() => setKpiSearchQuery("")} className="text-slate-400 hover:text-slate-600 transition-colors">
+                        <X className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Scrollable list of schools */}
+                <div className="flex-1 overflow-y-auto p-6 bg-[#f8fafc]/30 flex flex-col gap-3.5">
+                  {filteredKpiRecords.length === 0 ? (
+                    <div className="bg-white rounded-2xl border border-slate-150 p-12 flex flex-col items-center justify-center text-center gap-2 my-auto">
+                      <Inbox className="w-8 h-8 text-slate-350 animate-bounce" />
+                      <h5 className="text-xs font-black text-slate-700 uppercase tracking-wider">No matching records</h5>
+                      <p className="text-[10px] text-slate-400 font-bold uppercase leading-relaxed max-w-[240px]">
+                        No schools fit the matching criteria or filter key.
+                      </p>
+                    </div>
+                  ) : (
+                    filteredKpiRecords.map((item: any) => {
+                      const schoolName = item.schools?.kgbv_name || "Unknown School";
+                      const districtName = item.schools?.district || "N/A";
+                      const sysCount = getSystemCount(item);
+                      const isCompleted = item.overall_status === 'Completed';
+
+                      return (
+                        <div 
+                          key={item.id}
+                          onClick={() => {
+                            router.push(`/installations/${item.id}`);
+                          }}
+                          className="bg-white border border-slate-200 rounded-2xl p-4 shadow-sm hover:border-slate-350 hover:shadow-md cursor-pointer transition-all flex flex-col gap-3 group relative overflow-hidden text-left"
+                        >
+                          {/* Left color bar */}
+                          <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${selectedKpiDetails.colorClass}`}></div>
+                          
+                          <div className="pl-2.5 flex justify-between items-start gap-4">
+                            <div className="min-w-0">
+                              <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight line-clamp-2 group-hover:text-emerald-700 transition-colors">
+                                {schoolName.toUpperCase()}
+                              </h4>
+                              <div className="flex items-center gap-1.5 text-[9px] font-black text-slate-400 uppercase mt-1">
+                                <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                <span>{districtName.toUpperCase()}</span>
+                                <span className="text-slate-300">•</span>
+                                <span>ID: {item.schools?.school_id || "N/A"}</span>
+                              </div>
+                            </div>
+
+                            <div className="flex flex-col items-end shrink-0 gap-1.5">
+                              <span className="inline-flex px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-[9px] font-black uppercase tracking-wider">
+                                {sysCount} {sysCount === 1 ? 'System' : 'Systems'}
+                              </span>
+                              <span className={`inline-flex px-2 py-0.5 border rounded-full text-[8px] font-black uppercase tracking-wider ${
+                                isCompleted ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 
+                                item.overall_status === 'In Progress' ? 'bg-amber-50 border-amber-200 text-amber-700' :
+                                'bg-slate-50 border-slate-200 text-slate-500'
+                              }`}>
+                                {item.overall_status || 'PENDING'}
+                              </span>
+                            </div>
+                          </div>
+
+                          {/* Subsystems Milestones status */}
+                          <div className="pl-2.5 border-t border-slate-100 pt-3 mt-1 flex justify-between items-center text-[9px] font-bold">
+                            <div className="flex gap-1.5 items-center">
+                              <span className="text-slate-400 uppercase tracking-wide">MILESTONES:</span>
+                              <div className="flex gap-1 items-center">
+                                {getStageIndicators(item)}
+                              </div>
+                            </div>
+                            <div className="flex items-center gap-1 text-[9px] text-slate-400 font-bold group-hover:text-emerald-600 transition-colors uppercase">
+                              <span>View Detail</span>
+                              <ChevronRight className="w-3.5 h-3.5 transform group-hover:translate-x-0.5 transition-transform" />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </div>
+
+              </div>
+
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 bg-white border-t border-slate-200 flex items-center justify-end select-none shrink-0 shadow-inner">
+              <button 
+                onClick={handleCloseKpiDrawer}
+                className="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md font-['DM_Sans'] text-center hover:shadow-lg active:scale-98"
+              >
+                Close Panel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

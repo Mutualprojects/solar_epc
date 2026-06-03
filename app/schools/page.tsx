@@ -331,6 +331,40 @@ export default function SchoolsPage() {
     );
   };
 
+  // Derived KPIs for Schools
+  const getSchoolStats = () => {
+    let completed = 0;
+    let certificates = 0;
+    let pending = 0;
+    let totalSystems = 0;
+
+    schools.forEach(school => {
+      totalSystems += (school.no_of_systems || 0);
+      const inst = installations.find(i => i.school_id === school.id);
+      
+      if (inst) {
+        if (inst.overall_status === "Completed" || inst.overall_percentage === 100) {
+          completed++;
+          if (inst.completion_certificate) certificates++;
+        } else {
+          pending++;
+        }
+      } else {
+        pending++;
+      }
+    });
+
+    return {
+      totalSchools: schools.length,
+      totalSystems,
+      completed,
+      certificates,
+      pending
+    };
+  };
+
+  const stats = getSchoolStats();
+
   return (
     <div className={`h-screen w-full bg-[#f8fafc] flex overflow-hidden ${dmSans.className}`}>
       {/* ── SIDEBAR ── */}
@@ -494,6 +528,39 @@ export default function SchoolsPage() {
 
         {/* Scrollable Data/Content Section */}
         <div className="flex-1 overflow-y-auto p-6 flex flex-col justify-between gap-6 min-h-0">
+
+          {/* KPI Dashboard */}
+          {!loading && schools.length > 0 && (
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 shrink-0 animate-fadeIn">
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-center min-h-[110px] relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-300">
+                <div className="absolute inset-0 bg-blue-500 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300"></div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Total Schools</span>
+                <span className="text-3xl font-black text-slate-800 mt-1">{stats.totalSchools}</span>
+                <span className="text-xs font-bold mt-1 text-blue-600">{stats.totalSystems} Total Systems</span>
+              </div>
+              
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-center min-h-[110px] relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-300">
+                <div className="absolute inset-0 bg-emerald-500 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300"></div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">100% Completed</span>
+                <span className="text-3xl font-black text-slate-800 mt-1">{stats.completed}</span>
+                <span className="text-xs font-bold mt-1 text-emerald-600">Installations Finished</span>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-center min-h-[110px] relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-300">
+                <div className="absolute inset-0 bg-indigo-500 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300"></div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Certificates Uploaded</span>
+                <span className="text-3xl font-black text-slate-800 mt-1">{stats.certificates}</span>
+                <span className="text-xs font-bold mt-1 text-indigo-600">Pending Sign-off: {Math.max(0, stats.completed - stats.certificates)}</span>
+              </div>
+
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col justify-center min-h-[110px] relative overflow-hidden group hover:-translate-y-0.5 transition-transform duration-300">
+                <div className="absolute inset-0 bg-amber-500 opacity-0 group-hover:opacity-[0.03] transition-opacity duration-300"></div>
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">In Progress / Pending</span>
+                <span className="text-3xl font-black text-slate-800 mt-1">{stats.pending}</span>
+                <span className="text-xs font-bold mt-1 text-amber-600">Active Sites</span>
+              </div>
+            </div>
+          )}
 
           {loading ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3">
