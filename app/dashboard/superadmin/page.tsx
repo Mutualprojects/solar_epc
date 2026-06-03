@@ -76,6 +76,11 @@ const AnimatedCounter = ({ value }: { value: number }) => {
 export default function SuperAdminDashboard() {
   const router = useRouter();
 
+  // Helper to extract the actual tank/system count for an installation record
+  const getSystemCount = (item: any) => {
+    return Math.max(1, item.schools?.no_of_systems || 1);
+  };
+
   // Helper to format dates chronologically
   const formatDate = (dStr: string | null) => {
     if (!dStr) return "N/A";
@@ -381,11 +386,6 @@ export default function SuperAdminDashboard() {
 
     return true;
   });
-
-  // Helper to extract the actual tank/system count for an installation record
-  const getSystemCount = (item: any) => {
-    return Math.max(1, item.schools?.no_of_systems || 1);
-  };
 
   // 6. Metric Calculations
   const totalSchools = Array.from(new Set(filteredInstallations.map(x => x.school_id))).length;
@@ -1068,8 +1068,8 @@ export default function SuperAdminDashboard() {
                     </div>
                   ) : (
                     <>
-                      <div className="h-[160px] w-full flex justify-center items-center relative">
-                        <ResponsiveContainer width="100%" height="100%">
+                      <div className="min-h-[160px] min-w-0 w-full flex justify-center items-center relative">
+                        <ResponsiveContainer width="100%" height={160}>
                           <PieChart>
                             <Pie
                               data={drawerPieData}
