@@ -1,7 +1,7 @@
 const net = require('net');
 
-const host = '172.30.0.186';
-const ports = [18080, 18090, 18091, 18000, 8000, 8001, 8080, 5432, 54321, 54322, 6432];
+const host = '172.30.0.190';
+const ports = [18080, 18090, 18091, 18000, 8000, 8001, 8080, 5432, 54321, 54322, 6432, 3000, 3100];
 
 function checkPort(port) {
   return new Promise((resolve) => {
