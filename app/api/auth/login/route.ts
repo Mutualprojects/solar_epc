@@ -60,7 +60,14 @@ export async function POST(request: Request) {
     }, { status: 200 });
 
   } catch (error: any) {
-    console.error('Login error:', error.message);
-    return NextResponse.json({ success: false, error: 'Internal server error' }, { status: 500 });
+    console.error('Login error:', error.message || error);
+    return NextResponse.json(
+      { 
+        success: false, 
+        error: 'Internal server error', 
+        details: error.message || String(error) // Added detailed error message for debugging
+      }, 
+      { status: 500 }
+    );
   }
 }
