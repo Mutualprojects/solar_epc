@@ -41,6 +41,27 @@ export async function POST(request: Request) {
     // Update last login
     await supabase.schema('roof_top').from('users').update({ last_login: new Date().toISOString() }).eq('id', user.id);
 
+    // Create login session record
+    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || '127.0.0.1';
+    const userAgent = request.headers.get('user-agent') || 'Unknown';
+    
+    const { data: sessionData, error: sessionErr } = await supabase
+      .schema('roof_top')
+      .from('user_sessions')
+      .insert({
+        user_id: user.id,
+        login_time: new Date().toISOString(),
+        last_active_time: new Date().toISOString(),
+        ip_address: ipAddress.split(',')[0].trim(),
+        user_agent: userAgent
+      })
+      .select('id')
+      .single();
+
+    if (sessionErr) {
+      console.error('Session record error:', sessionErr.message);
+    }
+
     // Generate JWT token
     const token = signToken({
       userId: user.id,
@@ -56,7 +77,8 @@ export async function POST(request: Request) {
       success: true,
       message: 'Login successful',
       token,
-      user
+      user,
+      sessionId: sessionData?.id || null
     }, { status: 200 });
 
   } catch (error: any) {

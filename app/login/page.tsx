@@ -56,6 +56,9 @@ export default function LoginPage() {
       if (data.success) {
         localStorage.setItem("token", data.token);
         localStorage.setItem("user", JSON.stringify(data.user));
+        if (data.sessionId) {
+          localStorage.setItem("sessionId", data.sessionId);
+        }
         
         setToast({ message: "Login successful! Redirecting...", type: "success" });
 

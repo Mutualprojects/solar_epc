@@ -73,6 +73,45 @@ const AnimatedCounter = ({ value }: { value: number }) => {
   return <>{count.toLocaleString()}</>;
 };
 
+// Helper to format session duration
+const formatDuration = (seconds: number) => {
+  if (!seconds || seconds <= 0) return "Just started";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+};
+
+// Helper to parse user agent
+const parseUserAgent = (ua: string) => {
+  if (!ua) return "Unknown Device";
+  const lower = ua.toLowerCase();
+  let os = "Device";
+  let browser = "Browser";
+
+  if (lower.includes("windows")) os = "Windows";
+  else if (lower.includes("macintosh") || lower.includes("mac os")) os = "macOS";
+  else if (lower.includes("android")) os = "Android";
+  else if (lower.includes("iphone") || lower.includes("ipad")) os = "iOS";
+  else if (lower.includes("linux")) os = "Linux";
+
+  if (lower.includes("chrome") || lower.includes("crios")) browser = "Chrome";
+  else if (lower.includes("firefox")) browser = "Firefox";
+  else if (lower.includes("safari") && !lower.includes("chrome")) browser = "Safari";
+  else if (lower.includes("edge")) browser = "Edge";
+  
+  return `${os} • ${browser}`;
+};
+
+// Helper to check if a session is currently online
+const isSessionOnline = (lastActiveStr: string) => {
+  if (!lastActiveStr) return false;
+  const diff = Date.now() - new Date(lastActiveStr).getTime();
+  return diff < 45000; // Active within 45 seconds
+};
+
 export default function SuperAdminDashboard() {
   const router = useRouter();
 
@@ -100,6 +139,10 @@ export default function SuperAdminDashboard() {
   const [dataLoading, setDataLoading] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
   const [mounted, setMounted] = useState(false);
+
+  // User Sessions & Monitoring States
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
 
   // Filters State
   const [searchQuery, setSearchQuery] = useState("");
@@ -250,7 +293,7 @@ export default function SuperAdminDashboard() {
     setMounted(true);
   }, [router]);
 
-  // 2. Fetch Installations data
+  // 2. Fetch Installations & Sessions data
   const fetchInstallations = async () => {
     try {
       setDataLoading(true);
@@ -269,9 +312,29 @@ export default function SuperAdminDashboard() {
     }
   };
 
+  const fetchSessions = async () => {
+    try {
+      setSessionsLoading(true);
+      const res = await fetch(`/api/admin/sessions?t=${Date.now()}`, { cache: "no-store" });
+      const result = await res.json();
+      if (result.success) {
+        setSessions(result.data || []);
+      }
+    } catch (err) {
+      console.error("Failed to load user login sessions", err);
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!authLoading) {
       fetchInstallations();
+      fetchSessions();
+
+      // Poll user sessions every 10 seconds for real-time live monitoring
+      const interval = setInterval(fetchSessions, 10000);
+      return () => clearInterval(interval);
     }
   }, [authLoading]);
 
@@ -988,6 +1051,117 @@ export default function SuperAdminDashboard() {
                 </div>
               )}
             </div>
+          </div>
+
+          {/* ── LIVE SESSION ACTIVITY TRACKER ── */}
+          <div className="mt-8 bg-white rounded-3xl p-7 border border-slate-200/70 shadow-sm select-text">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+              <div>
+                <div className="flex items-center gap-2.5">
+                  <h3 className="text-sm font-black text-slate-800 uppercase tracking-widest leading-none">Personnel Session Monitor</h3>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-100 text-[9px] font-black uppercase tracking-wider text-emerald-700">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Live
+                  </span>
+                </div>
+                <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mt-1">Real-time status and active duration of logged-in staff</p>
+              </div>
+              <div className="text-right">
+                <span className="text-xs font-extrabold text-slate-700 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl">
+                  {sessions.filter(s => isSessionOnline(s.last_active_time)).length} Active Users Online
+                </span>
+              </div>
+            </div>
+
+            {sessionsLoading && sessions.length === 0 ? (
+              <div className="py-12 flex justify-center items-center">
+                <Loader2 className="w-6 h-6 text-emerald-500 animate-spin" />
+              </div>
+            ) : sessions.length === 0 ? (
+              <div className="py-12 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+                No active login sessions recorded.
+              </div>
+            ) : (
+              <div className="overflow-x-auto border border-slate-105 rounded-2xl">
+                <table className="w-full border-collapse text-left text-xs font-semibold">
+                  <thead>
+                    <tr className="bg-slate-50 border-b border-slate-150 text-[10px] text-slate-400 font-black uppercase tracking-wider">
+                      <th className="py-3 px-4">User</th>
+                      <th className="py-3 px-4">Role</th>
+                      <th className="py-3 px-4">Login Time</th>
+                      <th className="py-3 px-4">Spent Duration</th>
+                      <th className="py-3 px-4">Device &amp; IP</th>
+                      <th className="py-3 px-4 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 text-slate-600 font-bold">
+                    {sessions.map((session: any) => {
+                      const userData = session.users || {};
+                      const roleName = userData.roles?.role_name || "Staff";
+                      const online = isSessionOnline(session.last_active_time);
+                      const initials = userData.full_name
+                        ? userData.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+                        : "US";
+
+                      return (
+                        <tr key={session.id} className="hover:bg-slate-50/50 transition-colors">
+                          <td className="py-3 px-4 flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 font-black flex items-center justify-center shrink-0 uppercase text-[11px] border border-emerald-100">
+                              {initials}
+                            </div>
+                            <div className="flex flex-col">
+                              <span className="text-slate-800 font-extrabold uppercase text-[11px]">{userData.full_name || 'Unknown User'}</span>
+                              <span className="text-[10px] text-slate-400 font-medium lowercase leading-tight">{userData.email || '—'}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <span className={`inline-flex px-2 py-0.5 rounded-md text-[9px] font-black uppercase tracking-wider ${
+                              roleName === "Super Admin" ? "bg-purple-50 text-purple-700 border border-purple-100" :
+                              roleName === "Viewer" ? "bg-slate-55 text-slate-600 border border-slate-200" :
+                              "bg-blue-50 text-blue-700 border border-blue-100"
+                            }`}>
+                              {roleName}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4 text-slate-500 font-medium">
+                            {new Date(session.login_time).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit"
+                            })}
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex items-center gap-1.5 text-slate-700 font-extrabold">
+                              <Clock className="w-3.5 h-3.5 text-slate-400" />
+                              {formatDuration(session.duration_seconds)}
+                            </div>
+                          </td>
+                          <td className="py-3 px-4">
+                            <div className="flex flex-col text-[10px] text-slate-550 font-medium">
+                              <span>{parseUserAgent(session.user_agent)}</span>
+                              <span className="text-slate-400 font-bold">IP: {session.ip_address || "N/A"}</span>
+                            </div>
+                          </td>
+                          <td className="py-3 px-4 text-center">
+                            {online ? (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-50 border border-emerald-250 text-[9px] font-black uppercase text-emerald-700">
+                                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-ping"></span>
+                                Active
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-slate-50 border border-slate-200 text-[9px] font-black uppercase text-slate-400">
+                                Offline
+                              </span>
+                            )}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* ── DashboardFilter Component ── */}

@@ -217,6 +217,28 @@ export function SessionNavBar() {
     } catch (e) { /* silent */ }
   }, []);
 
+  // Session Activity Heartbeat Tracker
+  useEffect(() => {
+    const sessionId = localStorage.getItem("sessionId");
+    if (!sessionId) return;
+
+    const sendHeartbeat = async () => {
+      try {
+        await fetch("/api/auth/session/heartbeat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
+      } catch (e) {
+        // silent
+      }
+    };
+
+    sendHeartbeat();
+    const interval = setInterval(sendHeartbeat, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <>
       {/* ════════════════════════════════════════════════════════
