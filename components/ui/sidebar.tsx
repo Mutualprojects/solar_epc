@@ -15,6 +15,7 @@ import {
   X,
   Menu,
   Activity,
+  Database,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -135,9 +136,18 @@ function SidebarContent({
 
       {/* ── Nav Links ── */}
       <div className="flex flex-1 flex-col overflow-y-auto overflow-x-hidden px-3 py-3 gap-1 scrollbar-none">
-        {NAV_ITEMS.map((item) => (
-          <NavLink key={item.href} item={item} onNavigate={onNavigate} />
-        ))}
+        {(() => {
+          const userRole = (user?.roles?.role_name || user?.role || "").toLowerCase().trim();
+          const isSuperAdmin = userRole === "super admin";
+          const items = [...NAV_ITEMS];
+          if (isSuperAdmin) {
+            // Insert before Profile (index 6, right after Personnel)
+            items.splice(6, 0, { href: "/erp", label: "ERP Integration", Icon: Database, match: "erp" });
+          }
+          return items.map((item) => (
+            <NavLink key={item.href} item={item} onNavigate={onNavigate} />
+          ));
+        })()}
       </div>
 
       {/* ── User Footer ── */}
