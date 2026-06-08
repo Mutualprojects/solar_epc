@@ -234,6 +234,7 @@ export default function SuperAdminDashboard() {
     }
 
     try {
+      const parsedUser = JSON.parse(storedUser);
       const roleName = parsedUser.roles?.role_name || parsedUser.role;
       if (roleName !== "Super Admin" && roleName !== "Viewer") {
         router.push("/login");
