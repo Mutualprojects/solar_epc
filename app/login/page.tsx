@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Mail, Lock, ArrowRight, Sun, Loader2, Eye, EyeOff, School, Zap, Droplet, ThermometerSun, CheckCircle2, AlertCircle } from "lucide-react";
+import { Mail, Lock, ArrowRight, ChevronRight, Sun, Loader2, Eye, EyeOff, School, Zap, Droplet, ThermometerSun, CheckCircle2, AlertCircle } from "lucide-react";
 import Image from "next/image";
 
 export default function LoginPage() {
@@ -634,46 +634,96 @@ export default function LoginPage() {
           </div>
 
           {/* Flow network indicator */}
-          <div className="flow-card" style={{ maxWidth: '520px', borderColor: 'rgba(226, 232, 240, 1)', boxShadow: '0 15px 40px rgba(0, 0, 0, 0.05)' }}>
-            <div className="flow-inner">
-              <div className="flow-node">
-                <div className="flow-icon border-2 border-amber-100 text-amber-500 shadow-[0_4px_12px_rgba(245,158,11,0.12)]">
-                  <Sun className="pulse" size={28} />
+          <div className="flow-card" style={{ maxWidth: '520px', borderColor: 'rgba(226, 232, 240, 1)', boxShadow: '0 15px 40px rgba(0, 0, 0, 0.05)', overflow: 'hidden' }}>
+            {/* Header */}
+            <p style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '14px', textAlign: 'center', width: '100%' }}>
+              Live Flow System
+            </p>
+            <div style={{ position: 'relative', width: '100%' }}>
+              {/* Connecting line behind icons */}
+              <div style={{
+                position: 'absolute',
+                top: '28px',
+                left: '28px',
+                right: '28px',
+                height: '2px',
+                background: 'linear-gradient(90deg, #fbbf24, #f97316, #3b82f6, #6366f1)',
+                opacity: 0.3,
+                borderRadius: '2px',
+                zIndex: 0,
+              }} />
+
+              <div className="flow-inner" style={{ position: 'relative', zIndex: 1 }}>
+                {/* Node 1 - Solar */}
+                <div className="flow-node">
+                  <div className="flow-icon border-2 border-amber-100 text-amber-500 shadow-[0_4px_12px_rgba(245,158,11,0.2)]" style={{ background: '#fffbeb' }}>
+                    <Sun className="pulse" size={26} />
+                  </div>
+                  <span className="flow-label text-amber-600">Solar</span>
                 </div>
-                <span className="flow-label text-amber-600">Solar</span>
-              </div>
 
-              <div className="flow-arrow" style={{ animationDelay: '0s' }}>
-                <ArrowRight size={24} />
-              </div>
-
-              <div className="flow-node">
-                <div className="flow-icon border-2 border-orange-100 text-orange-500 shadow-[0_4px_12px_rgba(249,115,22,0.12)]">
-                  <ThermometerSun size={28} />
+                {/* Arrow 1 */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px', animation: 'slideArrow 1.4s ease-in-out infinite', animationDelay: '0s' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fbbf24', opacity: 0.7 }} />
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fbbf24', opacity: 0.5 }} />
+                    <ChevronRight size={16} style={{ color: '#f97316' }} />
+                  </div>
                 </div>
-                <span className="flow-label text-orange-600">Heater</span>
-              </div>
 
-              <div className="flow-arrow" style={{ animationDelay: '0.4s' }}>
-                <ArrowRight size={24} />
-              </div>
-
-              <div className="flow-node">
-                <div className="flow-icon border-2 border-blue-100 text-blue-500 shadow-[0_4px_12px_rgba(59,130,246,0.12)]">
-                  <Droplet size={28} />
+                {/* Node 2 - Heater */}
+                <div className="flow-node">
+                  <div className="flow-icon border-2 border-orange-100 text-orange-500 shadow-[0_4px_12px_rgba(249,115,22,0.2)]" style={{ background: '#fff7ed' }}>
+                    <ThermometerSun size={26} />
+                  </div>
+                  <span className="flow-label text-orange-600">Heater</span>
                 </div>
-                <span className="flow-label text-blue-600">Tank</span>
-              </div>
 
-              <div className="flow-arrow" style={{ animationDelay: '0.8s' }}>
-                <ArrowRight size={24} />
-              </div>
-
-              <div className="flow-node">
-                <div className="flow-icon border-2 border-indigo-100 text-indigo-500 shadow-[0_4px_12px_rgba(99,102,241,0.12)]">
-                  <School size={28} />
+                {/* Arrow 2 */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px', animation: 'slideArrow 1.4s ease-in-out infinite', animationDelay: '0.35s' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fb923c', opacity: 0.7 }} />
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fb923c', opacity: 0.5 }} />
+                    <ChevronRight size={16} style={{ color: '#3b82f6' }} />
+                  </div>
                 </div>
-                <span className="flow-label text-indigo-600">School</span>
+
+                {/* Node 3 - Tank */}
+                <div className="flow-node">
+                  <div className="flow-icon border-2 border-blue-100 text-blue-500 shadow-[0_4px_12px_rgba(59,130,246,0.2)]" style={{ background: '#eff6ff' }}>
+                    <Droplet size={26} />
+                  </div>
+                  <span className="flow-label text-blue-600">Tank</span>
+                </div>
+
+                {/* Arrow 3 */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '2px', animation: 'slideArrow 1.4s ease-in-out infinite', animationDelay: '0.7s' }}>
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#60a5fa', opacity: 0.7 }} />
+                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#60a5fa', opacity: 0.5 }} />
+                    <ChevronRight size={16} style={{ color: '#6366f1' }} />
+                  </div>
+                </div>
+
+                {/* Node 4 - School */}
+                <div className="flow-node">
+                  <div className="flow-icon border-2 border-indigo-100 text-indigo-500 shadow-[0_4px_12px_rgba(99,102,241,0.2)]" style={{ background: '#eef2ff' }}>
+                    <School size={26} />
+                  </div>
+                  <span className="flow-label text-indigo-600">School</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer status */}
+            <div style={{ marginTop: '14px', paddingTop: '12px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'center', gap: '16px', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '9px', fontWeight: 800, color: '#10b981', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block', animation: 'iconPulse 2s ease-in-out infinite' }} />
+                System Active
+              </div>
+              <div style={{ width: '1px', height: '14px', background: '#e2e8f0' }} />
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '9px', fontWeight: 800, color: '#64748b', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                KGBV &amp; APMS Schools
               </div>
             </div>
           </div>
