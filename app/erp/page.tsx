@@ -41,7 +41,6 @@ export default function ErpPage() {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [isSuperAdmin, setIsSuperAdmin] = useState<boolean | null>(null);
 
   // Filter States
   const [projectCode, setProjectCode] = useState("PROJ-0021");
@@ -71,15 +70,7 @@ export default function ErpPage() {
 
     const parsedUser = JSON.parse(storedUser);
     setUser(parsedUser);
-
-    const userRole = (parsedUser?.roles?.role_name || parsedUser?.role || "").toLowerCase().trim();
-    if (userRole === "super admin") {
-      setIsSuperAdmin(true);
-      fetchErpData(projectCode);
-    } else {
-      setIsSuperAdmin(false);
-      setLoading(false);
-    }
+    fetchErpData(projectCode);
   }, [router]);
 
   const fetchErpData = async (project: string, isRefresh = false) => {
@@ -218,31 +209,7 @@ export default function ErpPage() {
     }
   }, [activeTab, erpData, searchTerm]);
 
-  // Unauthorized Access Page
-  if (isSuperAdmin === false) {
-    return (
-      <div className={`h-screen w-full bg-[#f8fafc] flex overflow-hidden ${dmSans.className}`}>
-        <SessionNavBar />
-        <main className="flex-1 flex flex-col items-center justify-center p-8 bg-slate-50">
-          <div className="max-w-md w-full text-center bg-white rounded-3xl border border-slate-200 p-8 shadow-xl">
-            <div className="w-16 h-16 bg-rose-50 border border-rose-100 text-rose-500 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-sm">
-              <ShieldAlert className="w-8 h-8" />
-            </div>
-            <h2 className="text-xl font-black text-slate-800 uppercase tracking-tight mb-2">Access Denied</h2>
-            <p className="text-sm font-semibold text-slate-500 mb-6 leading-relaxed">
-              ERP Integration details are restricted only to the **Super Admin** role. Please contact system administrators if you require credentials.
-            </p>
-            <button
-              onClick={() => router.push("/dashboard/superadmin")}
-              className="px-6 py-3 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all shadow-md hover:shadow-lg shadow-emerald-500/10 hover:shadow-emerald-500/20"
-            >
-              Back to Overview
-            </button>
-          </div>
-        </main>
-      </div>
-    );
-  }
+
 
   return (
     <div className={`h-screen w-full bg-[#f8fafc] flex overflow-hidden ${dmSans.className}`}>
