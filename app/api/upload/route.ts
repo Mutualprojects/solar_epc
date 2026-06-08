@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseAdmin as supabase } from '@/lib/supabaseAdmin';
 import path from 'path';
 
 // Helper to attempt to pre-create buckets (fails gracefully if RLS blocks it)
