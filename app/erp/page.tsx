@@ -25,7 +25,15 @@ import {
   UserCheck,
   ExternalLink,
   Calendar,
-  ChevronRight
+  ChevronRight,
+  X,
+  Info,
+  Hash,
+  Briefcase,
+  User,
+  Activity,
+  Package,
+  Wrench
 } from "lucide-react";
 
 const dmSans = DM_Sans({
@@ -42,6 +50,10 @@ export default function ErpPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [user, setUser] = useState<any>(null);
   const [isViewer, setIsViewer] = useState<boolean | null>(null);
+
+  // Detail Drawer States
+  const [selectedDoc, setSelectedDoc] = useState<any>(null);
+  const [drawerOpen, setDrawerOpen] = useState(false);
 
   // Filter States
   const [projectCode, setProjectCode] = useState("PROJ-0021");
@@ -433,192 +445,427 @@ export default function ErpPage() {
                 </p>
               </div>
             ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-left border-collapse">
-                  <thead>
-                    <tr className="bg-slate-50 text-slate-500 text-[10px] uppercase tracking-wider font-black border-b border-slate-150 select-none">
-                      {activeTab === "po" && (
-                        <>
-                          <th className="py-3.5 px-6">Order ID</th>
-                          <th className="py-3.5 px-6">Supplier</th>
-                          <th className="py-3.5 px-6">Transaction Date</th>
-                          <th className="py-3.5 px-6">Grand Total</th>
-                          <th className="py-3.5 px-6">Status</th>
-                          <th className="py-3.5 px-6 pr-6 text-right">Actions</th>
-                        </>
-                      )}
-                      {activeTab === "pi" && (
-                        <>
-                          <th className="py-3.5 px-6">Invoice ID</th>
-                          <th className="py-3.5 px-6">Supplier</th>
-                          <th className="py-3.5 px-6">Posting Date</th>
-                          <th className="py-3.5 px-6">Grand Total</th>
-                          <th className="py-3.5 px-6">Status</th>
-                          <th className="py-3.5 px-6 pr-6 text-right">Actions</th>
-                        </>
-                      )}
-                      {activeTab === "so" && (
-                        <>
-                          <th className="py-3.5 px-6">Order ID</th>
-                          <th className="py-3.5 px-6">Customer</th>
-                          <th className="py-3.5 px-6">Transaction Date</th>
-                          <th className="py-3.5 px-6">Grand Total</th>
-                          <th className="py-3.5 px-6">Status</th>
-                          <th className="py-3.5 px-6 pr-6 text-right">Actions</th>
-                        </>
-                      )}
-                      {activeTab === "si" && (
-                        <>
-                          <th className="py-3.5 px-6">Invoice ID</th>
-                          <th className="py-3.5 px-6">Customer</th>
-                          <th className="py-3.5 px-6">Posting Date</th>
-                          <th className="py-3.5 px-6">Grand Total</th>
-                          <th className="py-3.5 px-6">Status</th>
-                          <th className="py-3.5 px-6 pr-6 text-right">Actions</th>
-                        </>
-                      )}
-                      {activeTab === "expense" && (
-                        <>
-                          <th className="py-3.5 px-6">Claim ID</th>
-                          <th className="py-3.5 px-6">Employee</th>
-                          <th className="py-3.5 px-6">Posting Date</th>
-                          <th className="py-3.5 px-6">Claimed Amount</th>
-                          <th className="py-3.5 px-6">Status</th>
-                          <th className="py-3.5 px-6 pr-6 text-right">Actions</th>
-                        </>
-                      )}
-                      {activeTab === "timesheet" && (
-                        <>
-                          <th className="py-3.5 px-6">Timesheet ID</th>
-                          <th className="py-3.5 px-6">Employee</th>
-                          <th className="py-3.5 px-6">Start Date</th>
-                          <th className="py-3.5 px-6">Total Hours</th>
-                          <th className="py-3.5 px-6">Status</th>
-                          <th className="py-3.5 px-6 pr-6 text-right">Actions</th>
-                        </>
-                      )}
-                    </tr>
-                  </thead>
-                  <tbody className="text-xs font-bold text-slate-700 divide-y divide-slate-100">
-                    {filteredActiveData.map((doc: any) => (
-                      <tr key={doc.name} className="hover:bg-slate-50/50 transition-colors">
-                        {/* ── Purchase Order Row ── */}
-                        {activeTab === "po" && (
-                          <>
-                            <td className="py-3.5 px-6 font-extrabold text-slate-800">{doc.name}</td>
-                            <td className="py-3.5 px-6 text-slate-550 uppercase truncate max-w-[200px]">{doc.supplier}</td>
-                            <td className="py-3.5 px-6 text-slate-500 font-medium">
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                {doc.transaction_date || doc.creation?.split(" ")[0] || "—"}
+              <div className="flex-1 overflow-y-auto p-6 bg-slate-50/30">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredActiveData.map((doc: any) => {
+                    const statusBadge = getStatusBadge(doc.status);
+                    
+                    // Tab-specific details
+                    let mainTitle = "";
+                    let subtitleLabel = "";
+                    let subtitleValue = "";
+                    let dateLabel = "Date";
+                    let dateValue = "";
+                    let amountValue: React.ReactNode = null;
+                    let DocIcon = ShoppingBag;
+                    
+                    if (activeTab === "po") {
+                      DocIcon = ShoppingBag;
+                      mainTitle = doc.name;
+                      subtitleLabel = "Supplier";
+                      subtitleValue = doc.supplier || "—";
+                      dateLabel = "Transaction Date";
+                      dateValue = doc.transaction_date || doc.creation?.split(" ")[0] || "—";
+                      amountValue = (
+                        <div className="text-emerald-600 font-extrabold text-sm md:text-base">
+                          {formatCurrency(doc.grand_total || 0)}
+                        </div>
+                      );
+                    } else if (activeTab === "pi") {
+                      DocIcon = CreditCard;
+                      mainTitle = doc.name;
+                      subtitleLabel = "Supplier";
+                      subtitleValue = doc.supplier || "—";
+                      dateLabel = "Posting Date";
+                      dateValue = doc.posting_date || doc.creation?.split(" ")[0] || "—";
+                      amountValue = (
+                        <div className="text-emerald-600 font-extrabold text-sm md:text-base">
+                          {formatCurrency(doc.grand_total || 0)}
+                        </div>
+                      );
+                    } else if (activeTab === "so") {
+                      DocIcon = FileText;
+                      mainTitle = doc.name;
+                      subtitleLabel = "Customer";
+                      subtitleValue = doc.customer || "—";
+                      dateLabel = "Transaction Date";
+                      dateValue = doc.transaction_date || doc.creation?.split(" ")[0] || "—";
+                      amountValue = (
+                        <div className="text-emerald-600 font-extrabold text-sm md:text-base">
+                          {formatCurrency(doc.grand_total || 0)}
+                        </div>
+                      );
+                    } else if (activeTab === "si") {
+                      DocIcon = FileSpreadsheet;
+                      mainTitle = doc.name;
+                      subtitleLabel = "Customer";
+                      subtitleValue = doc.customer || "—";
+                      dateLabel = "Posting Date";
+                      dateValue = doc.posting_date || doc.creation?.split(" ")[0] || "—";
+                      amountValue = (
+                        <div className="text-emerald-600 font-extrabold text-sm md:text-base">
+                          {formatCurrency(doc.grand_total || 0)}
+                        </div>
+                      );
+                    } else if (activeTab === "expense") {
+                      DocIcon = DollarSign;
+                      mainTitle = doc.name;
+                      subtitleLabel = "Employee";
+                      subtitleValue = doc.employee_name || doc.employee || "—";
+                      dateLabel = "Posting Date";
+                      dateValue = doc.posting_date || doc.creation?.split(" ")[0] || "—";
+                      amountValue = (
+                        <div className="text-emerald-650 font-extrabold text-sm md:text-base">
+                          {formatCurrency(doc.total_claimed_amount || 0)}
+                        </div>
+                      );
+                    } else if (activeTab === "timesheet") {
+                      DocIcon = Clock;
+                      mainTitle = doc.name;
+                      subtitleLabel = "Employee";
+                      subtitleValue = doc.employee || "—";
+                      dateLabel = "Start Date";
+                      dateValue = doc.start_date?.split(" ")[0] || doc.creation?.split(" ")[0] || "—";
+                      amountValue = (
+                        <div className="text-indigo-600 font-extrabold text-sm md:text-base">
+                          {doc.total_hours || 0} hrs
+                        </div>
+                      );
+                    }
+                    
+                    return (
+                      <div
+                        key={doc.name}
+                        onClick={() => {
+                          setSelectedDoc(doc);
+                          setDrawerOpen(true);
+                        }}
+                        className="group relative bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between"
+                      >
+                        {/* Soft background glow */}
+                        <div className="pointer-events-none absolute -top-8 -right-8 w-24 h-24 rounded-full bg-emerald-50 opacity-[0.05] group-hover:opacity-[0.1] blur-xl transition-opacity duration-300" />
+                        
+                        <div>
+                          {/* Card Header */}
+                          <div className="flex items-center justify-between mb-4">
+                            <div className="flex items-center gap-2.5">
+                              <div className="w-8 h-8 rounded-lg bg-slate-50 group-hover:bg-emerald-50 text-slate-400 group-hover:text-emerald-600 border border-slate-100 flex items-center justify-center transition-colors">
+                                <DocIcon className="w-4.5 h-4.5" />
+                              </div>
+                              <span className="text-xs font-black text-slate-800 uppercase tracking-tight group-hover:text-emerald-600 transition-colors">
+                                {mainTitle}
                               </span>
-                            </td>
-                            <td className="py-3.5 px-6 text-emerald-700 font-extrabold">{formatCurrency(doc.grand_total || 0)}</td>
-                            <td className="py-3.5 px-6">{getStatusBadge(doc.status)}</td>
-                          </>
-                        )}
-
-                        {/* ── Purchase Invoice Row ── */}
-                        {activeTab === "pi" && (
-                          <>
-                            <td className="py-3.5 px-6 font-extrabold text-slate-800">{doc.name}</td>
-                            <td className="py-3.5 px-6 text-slate-550 uppercase truncate max-w-[200px]">{doc.supplier}</td>
-                            <td className="py-3.5 px-6 text-slate-500 font-medium">
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                {doc.posting_date || doc.creation?.split(" ")[0] || "—"}
+                            </div>
+                            {statusBadge}
+                          </div>
+                          
+                          {/* Card Body */}
+                          <div className="space-y-2.5 mb-5">
+                            <div>
+                              <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400 block">
+                                {subtitleLabel}
                               </span>
-                            </td>
-                            <td className="py-3.5 px-6 text-emerald-700 font-extrabold">{formatCurrency(doc.grand_total || 0)}</td>
-                            <td className="py-3.5 px-6">{getStatusBadge(doc.status)}</td>
-                          </>
-                        )}
-
-                        {/* ── Sales Order Row ── */}
-                        {activeTab === "so" && (
-                          <>
-                            <td className="py-3.5 px-6 font-extrabold text-slate-800">{doc.name}</td>
-                            <td className="py-3.5 px-6 text-slate-550 uppercase truncate max-w-[200px]">{doc.customer}</td>
-                            <td className="py-3.5 px-6 text-slate-500 font-medium">
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                {doc.transaction_date || doc.creation?.split(" ")[0] || "—"}
+                              <p className="text-xs font-bold text-slate-700 uppercase truncate mt-0.5">
+                                {subtitleValue}
+                              </p>
+                            </div>
+                            
+                            <div className="flex items-center gap-1.5 text-slate-500 font-medium">
+                              <Calendar className="w-3.5 h-3.5 text-slate-400" />
+                              <span className="text-[11px]">
+                                {dateValue}
                               </span>
-                            </td>
-                            <td className="py-3.5 px-6 text-emerald-700 font-extrabold">{formatCurrency(doc.grand_total || 0)}</td>
-                            <td className="py-3.5 px-6">{getStatusBadge(doc.status)}</td>
-                          </>
-                        )}
-
-                        {/* ── Sales Invoice Row ── */}
-                        {activeTab === "si" && (
-                          <>
-                            <td className="py-3.5 px-6 font-extrabold text-slate-800">{doc.name}</td>
-                            <td className="py-3.5 px-6 text-slate-550 uppercase truncate max-w-[200px]">{doc.customer}</td>
-                            <td className="py-3.5 px-6 text-slate-500 font-medium">
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                {doc.posting_date || doc.creation?.split(" ")[0] || "—"}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-6 text-emerald-700 font-extrabold">{formatCurrency(doc.grand_total || 0)}</td>
-                            <td className="py-3.5 px-6">{getStatusBadge(doc.status)}</td>
-                          </>
-                        )}
-
-                        {/* ── Expense Claim Row ── */}
-                        {activeTab === "expense" && (
-                          <>
-                            <td className="py-3.5 px-6 font-extrabold text-slate-800">{doc.name}</td>
-                            <td className="py-3.5 px-6 text-slate-550 uppercase truncate max-w-[200px]">{doc.employee_name || doc.employee}</td>
-                            <td className="py-3.5 px-6 text-slate-500 font-medium">
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                {doc.posting_date || doc.creation?.split(" ")[0] || "—"}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-6 text-emerald-700 font-extrabold">{formatCurrency(doc.total_claimed_amount || 0)}</td>
-                            <td className="py-3.5 px-6">{getStatusBadge(doc.status)}</td>
-                          </>
-                        )}
-
-                        {/* ── Timesheet Row ── */}
-                        {activeTab === "timesheet" && (
-                          <>
-                            <td className="py-3.5 px-6 font-extrabold text-slate-800">{doc.name}</td>
-                            <td className="py-3.5 px-6 text-slate-550 uppercase truncate max-w-[200px]">{doc.employee}</td>
-                            <td className="py-3.5 px-6 text-slate-500 font-medium">
-                              <span className="flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5 text-slate-400" />
-                                {doc.start_date?.split(" ")[0] || doc.creation?.split(" ")[0] || "—"}
-                              </span>
-                            </td>
-                            <td className="py-3.5 px-6 text-indigo-700 font-extrabold">{doc.total_hours || 0} hrs</td>
-                            <td className="py-3.5 px-6">{getStatusBadge(doc.status)}</td>
-                          </>
-                        )}
-
-                        {/* Action buttons */}
-                        <td className="py-3.5 px-6 text-right pr-6">
-                          <a
-                            href={`https://brihaspathi.m.frappe.cloud/app/${activeTab === "expense" ? "expense-claim" : activeTab === "timesheet" ? "timesheet" : activeTab === "po" ? "purchase-order" : activeTab === "pi" ? "purchase-invoice" : activeTab === "so" ? "sales-order" : "sales-invoice"}/${doc.name}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-slate-400 hover:text-emerald-600 transition-colors"
-                          >
-                            <span>Open ERP</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        {/* Card Footer / Action */}
+                        <div className="border-t border-slate-100 pt-3 mt-auto flex items-center justify-between">
+                          {amountValue}
+                          
+                          <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              onClick={() => {
+                                setSelectedDoc(doc);
+                                setDrawerOpen(true);
+                              }}
+                              className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 hover:bg-emerald-600 hover:text-white px-2.5 py-1.5 rounded-lg border border-emerald-100/50 transition-all cursor-pointer"
+                            >
+                              Details
+                            </button>
+                            <a
+                              href={`https://brihaspathi.m.frappe.cloud/app/${activeTab === "expense" ? "expense-claim" : activeTab === "timesheet" ? "timesheet" : activeTab === "po" ? "purchase-order" : activeTab === "pi" ? "purchase-invoice" : activeTab === "so" ? "sales-order" : "sales-invoice"}/${doc.name}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center w-7.5 h-7.5 bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg text-slate-400 hover:text-slate-700 transition-colors"
+                              title="Open in ERP"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />
+                            </a>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
           </div>
         </div>
       </main>
+
+      {/* ── DETAIL DRAWER (OFF-CANVAS) ── */}
+      {drawerOpen && selectedDoc && (
+        <div className="fixed inset-0 z-50 overflow-hidden" aria-labelledby="slide-over-title" role="dialog" aria-modal="true">
+          <style dangerouslySetInnerHTML={{__html: `
+            @keyframes slideInRight {
+              from { transform: translateX(100%); }
+              to { transform: translateX(0); }
+            }
+            .animate-slideInRight {
+              animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+            }
+          `}} />
+          <div className="absolute inset-0 overflow-hidden">
+            {/* Backdrop */}
+            <div 
+              className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm transition-opacity duration-300 ease-out cursor-pointer" 
+              onClick={() => setDrawerOpen(false)}
+            />
+
+            <div className="pointer-events-none fixed inset-y-0 right-0 flex max-w-full pl-10">
+              <div className="pointer-events-auto w-screen max-w-2xl transform bg-white shadow-2xl border-l border-slate-200 flex flex-col h-full animate-slideInRight select-text">
+                
+                {/* Drawer Header */}
+                <div className="px-6 py-5 bg-slate-50 border-b border-slate-200 flex items-center justify-between shrink-0">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center border border-emerald-100 shadow-sm">
+                      {activeTab === "po" && <ShoppingBag className="w-5 h-5" />}
+                      {activeTab === "pi" && <CreditCard className="w-5 h-5" />}
+                      {activeTab === "so" && <FileText className="w-5 h-5" />}
+                      {activeTab === "si" && <FileSpreadsheet className="w-5 h-5" />}
+                      {activeTab === "expense" && <DollarSign className="w-5 h-5" />}
+                      {activeTab === "timesheet" && <Clock className="w-5 h-5" />}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <h2 className="text-base font-black text-slate-800 uppercase tracking-tight">{selectedDoc.name}</h2>
+                        {getStatusBadge(selectedDoc.status)}
+                      </div>
+                      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">
+                        {tabConfig.find(t => t.id === activeTab)?.label} Details
+                      </p>
+                    </div>
+                  </div>
+                  <button 
+                    onClick={() => setDrawerOpen(false)}
+                    className="p-2 hover:bg-slate-200/60 rounded-xl text-slate-400 hover:text-slate-700 transition-colors cursor-pointer"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Drawer Body */}
+                <div className="flex-1 overflow-y-auto p-6 space-y-6">
+                  {/* General Stats / Quick Glance Card */}
+                  <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-2xl p-5 shadow-sm">
+                    <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                      <Info className="w-3.5 h-3.5 text-slate-400" /> Summary Info
+                    </h3>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Left Block */}
+                      <div>
+                        {activeTab === "po" || activeTab === "pi" ? (
+                          <>
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Supplier</span>
+                            <p className="text-xs font-black text-slate-700 uppercase mt-0.5 truncate">{selectedDoc.supplier || "—"}</p>
+                          </>
+                        ) : activeTab === "so" || activeTab === "si" ? (
+                          <>
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Customer</span>
+                            <p className="text-xs font-black text-slate-700 uppercase mt-0.5 truncate">{selectedDoc.customer || "—"}</p>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Employee</span>
+                            <p className="text-xs font-black text-slate-700 uppercase mt-0.5 truncate">{selectedDoc.employee_name || selectedDoc.employee || "—"}</p>
+                          </>
+                        )}
+                      </div>
+
+                      {/* Right Block */}
+                      <div>
+                        {selectedDoc.grand_total !== undefined || selectedDoc.total_claimed_amount !== undefined ? (
+                          <>
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Value Amount</span>
+                            <p className="text-sm font-black text-emerald-600 mt-0.5">
+                              {formatCurrency(selectedDoc.grand_total ?? selectedDoc.total_claimed_amount ?? 0)}
+                            </p>
+                          </>
+                        ) : selectedDoc.total_hours !== undefined ? (
+                          <>
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Duration</span>
+                            <p className="text-sm font-black text-indigo-600 mt-0.5">{selectedDoc.total_hours} Hours</p>
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Project</span>
+                            <p className="text-xs font-black text-slate-700 uppercase mt-0.5">{selectedDoc.project || "—"}</p>
+                          </>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Complete Document Fields */}
+                  <div className="space-y-4">
+                    <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">Document Details</h3>
+                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                      {/* Dynamic Human-readable Key-Values */}
+                      {Object.entries(selectedDoc).map(([key, val]: [string, any]) => {
+                        // Skip nested tables/arrays and long internal fields
+                        if (typeof val === "object" || Array.isArray(val) || key.startsWith("_") || !val) return null;
+                        
+                        // Human-friendly titles
+                        const cleanKey = key.replace(/_/g, " ").toUpperCase();
+                        
+                        return (
+                          <div key={key} className="border-b border-slate-100 pb-2">
+                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">{cleanKey}</span>
+                            <p className="text-xs font-semibold text-slate-700 mt-0.5 break-words">
+                              {typeof val === "number" && (key.includes("total") || key.includes("amount") || key.includes("rate"))
+                                ? formatCurrency(val)
+                                : String(val)}
+                            </p>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Embedded line items or logs if present */}
+                  {selectedDoc.items && Array.isArray(selectedDoc.items) && selectedDoc.items.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
+                        Line Items ({selectedDoc.items.length})
+                      </h3>
+                      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                        <table className="w-full text-left border-collapse">
+                          <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                              <th className="py-2.5 px-4">Item Details</th>
+                              <th className="py-2.5 px-4 text-center">Qty</th>
+                              <th className="py-2.5 px-4 text-right">Rate</th>
+                              <th className="py-2.5 px-4 text-right pr-4">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-[11px] font-bold text-slate-600 divide-y divide-slate-100">
+                            {selectedDoc.items.map((item: any, i: number) => (
+                              <tr key={i} className="hover:bg-slate-50/50">
+                                <td className="py-2.5 px-4">
+                                  <p className="font-extrabold text-slate-800">{item.item_code}</p>
+                                  {item.item_name && <p className="text-[9px] text-slate-400 mt-0.5">{item.item_name}</p>}
+                                </td>
+                                <td className="py-2.5 px-4 text-center">{item.qty} {item.uom || ""}</td>
+                                <td className="py-2.5 px-4 text-right">{formatCurrency(item.rate || 0)}</td>
+                                <td className="py-2.5 px-4 text-right pr-4 text-emerald-600 font-extrabold">{formatCurrency(item.amount || 0)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedDoc.expenses && Array.isArray(selectedDoc.expenses) && selectedDoc.expenses.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
+                        Expenses ({selectedDoc.expenses.length})
+                      </h3>
+                      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                        <table className="w-full text-left border-collapse">
+                          <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                              <th className="py-2.5 px-4">Type</th>
+                              <th className="py-2.5 px-4">Description</th>
+                              <th className="py-2.5 px-4 text-right pr-4">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-[11px] font-bold text-slate-600 divide-y divide-slate-100">
+                            {selectedDoc.expenses.map((expense: any, i: number) => (
+                              <tr key={i} className="hover:bg-slate-50/50">
+                                <td className="py-2.5 px-4 font-extrabold text-slate-800 uppercase">{expense.expense_type?.replace(/-/g, " ")}</td>
+                                <td className="py-2.5 px-4 text-slate-400 font-medium">{expense.description || "—"}</td>
+                                <td className="py-2.5 px-4 text-right pr-4 text-rose-600 font-extrabold">{formatCurrency(expense.amount || 0)}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedDoc.time_logs && Array.isArray(selectedDoc.time_logs) && selectedDoc.time_logs.length > 0 && (
+                    <div className="space-y-3">
+                      <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
+                        Activity Logs ({selectedDoc.time_logs.length})
+                      </h3>
+                      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                        <table className="w-full text-left border-collapse">
+                          <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                            <tr>
+                              <th className="py-2.5 px-4">Activity</th>
+                              <th className="py-2.5 px-4">Timeframe</th>
+                              <th className="py-2.5 px-4 text-right pr-4">Hours</th>
+                            </tr>
+                          </thead>
+                          <tbody className="text-[11px] font-bold text-slate-600 divide-y divide-slate-100">
+                            {selectedDoc.time_logs.map((log: any, i: number) => (
+                              <tr key={i} className="hover:bg-slate-50/50">
+                                <td className="py-2.5 px-4">
+                                  <p className="font-extrabold text-slate-800 uppercase">{log.activity_type || "—"}</p>
+                                  {log.description && <p className="text-[9px] text-slate-400 mt-0.5">{log.description}</p>}
+                                </td>
+                                <td className="py-2.5 px-4 text-slate-400 font-medium">
+                                  <div className="flex flex-col">
+                                    <span>From: {log.from_time?.replace("T", " ") || "—"}</span>
+                                    <span>To: {log.to_time?.replace("T", " ") || "—"}</span>
+                                  </div>
+                                </td>
+                                <td className="py-2.5 px-4 text-right pr-4 text-indigo-600 font-extrabold">{log.hours} hrs</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Drawer Footer */}
+                <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+                  <button
+                    onClick={() => setDrawerOpen(false)}
+                    className="px-4 py-2 border border-slate-200 hover:bg-slate-100 text-slate-600 rounded-xl text-xs font-black uppercase tracking-wider transition-all cursor-pointer"
+                  >
+                    Close
+                  </button>
+                  <a
+                    href={`https://brihaspathi.m.frappe.cloud/app/${activeTab === "expense" ? "expense-claim" : activeTab === "timesheet" ? "timesheet" : activeTab === "po" ? "purchase-order" : activeTab === "pi" ? "purchase-invoice" : activeTab === "so" ? "sales-order" : "sales-invoice"}/${selectedDoc.name}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
+                  >
+                    <span>View in Frappe Cloud ERP</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
