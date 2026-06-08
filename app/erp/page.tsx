@@ -625,6 +625,64 @@ export default function ErpPage() {
             .animate-slideInRight {
               animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
             }
+            .html-content-wrapper table {
+              width: 100%;
+              border-collapse: collapse;
+              margin: 10px 0;
+              font-size: 11px;
+              border: 1px solid #e2e8f0;
+              border-radius: 10px;
+              overflow: hidden;
+            }
+            .html-content-wrapper th {
+              background-color: #f8fafc;
+              color: #475569;
+              font-weight: 800;
+              text-transform: uppercase;
+              font-size: 9px;
+              letter-spacing: 0.5px;
+              padding: 8px 12px;
+              border-bottom: 1px solid #e2e8f0;
+              text-align: left;
+            }
+            .html-content-wrapper td {
+              padding: 8px 12px;
+              border-bottom: 1px solid #f1f5f9;
+              color: #334155;
+            }
+            .html-content-wrapper tr:last-child td {
+              border-bottom: none;
+            }
+            .html-content-wrapper p {
+              margin-bottom: 8px;
+              line-height: 1.5;
+            }
+            .html-content-wrapper p:last-child {
+              margin-bottom: 0;
+            }
+            .html-content-wrapper strong {
+              font-weight: 800;
+              color: #1e293b;
+            }
+            .html-content-wrapper blockquote {
+              border-left: 3px solid #10b981;
+              padding-left: 10px;
+              color: #64748b;
+              margin: 8px 0;
+            }
+            .html-content-wrapper ul {
+              list-style-type: disc !important;
+              margin-left: 20px !important;
+              margin-bottom: 8px !important;
+            }
+            .html-content-wrapper ol {
+              list-style-type: decimal !important;
+              margin-left: 20px !important;
+              margin-bottom: 8px !important;
+            }
+            .html-content-wrapper li {
+              margin-bottom: 4px;
+            }
           `}} />
           <div className="absolute inset-0 overflow-hidden">
             {/* Backdrop */}
@@ -730,14 +788,33 @@ export default function ErpPage() {
                         // Human-friendly titles
                         const cleanKey = key.replace(/_/g, " ").toUpperCase();
                         
+                        // Determine if it should span 2 columns
+                        const isLongField = 
+                          key === "terms" || 
+                          key === "other_charges_calculation" || 
+                          key.includes("address") || 
+                          key.includes("display") ||
+                          key === "remarks" || 
+                          key === "description" ||
+                          key === "in_words";
+
+                        const isHtml = typeof val === "string" && (val.includes("<") && val.includes(">"));
+                        
                         return (
-                          <div key={key} className="border-b border-slate-100 pb-2">
+                          <div key={key} className={`border-b border-slate-100 pb-2.5 ${isLongField ? "col-span-2" : "col-span-1"}`}>
                             <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">{cleanKey}</span>
-                            <p className="text-xs font-semibold text-slate-700 mt-0.5 break-words">
-                              {typeof val === "number" && (key.includes("total") || key.includes("amount") || key.includes("rate"))
-                                ? formatCurrency(val)
-                                : String(val)}
-                            </p>
+                            {isHtml ? (
+                              <div 
+                                className="text-xs font-semibold text-slate-700 mt-1 select-text html-content-wrapper"
+                                dangerouslySetInnerHTML={{ __html: val }}
+                              />
+                            ) : (
+                              <p className="text-xs font-semibold text-slate-700 mt-0.5 break-words select-text">
+                                {typeof val === "number" && (key.includes("total") || key.includes("amount") || key.includes("rate"))
+                                  ? formatCurrency(val)
+                                  : String(val)}
+                              </p>
+                            )}
                           </div>
                         );
                       })}
