@@ -529,8 +529,8 @@ export default function LoginPage() {
               <div className="logo-icon">
                 <Sun size={24} strokeWidth={2.5} />
               </div>
-              <div className="logo-text">
-                Solar<span>EPC</span>
+              <div className="logo-text" style={{ fontSize: '20px' }}>
+                APMS & <span>KGBV</span>
               </div>
             </div>
 
@@ -538,7 +538,7 @@ export default function LoginPage() {
             <h2 className="headline">
               Welcome <em>back.</em>
             </h2>
-            <p className="sub">Secure access to your intelligent solar management portal.</p>
+            <p className="sub">Rooftop Solar Water Heater Management for APMS & KGBV Schools.</p>
 
             {/* Error Message */}
             {error && <div className="error-box">{error}</div>}
@@ -558,7 +558,7 @@ export default function LoginPage() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     className="input-field"
-                    placeholder="admin@solarepc.com"
+                    placeholder="admin@schools.com"
                     autoComplete="email"
                   />
                 </div>
