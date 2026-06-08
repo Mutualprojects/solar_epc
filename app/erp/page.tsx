@@ -54,6 +54,37 @@ export default function ErpPage() {
   // Detail Drawer States
   const [selectedDoc, setSelectedDoc] = useState<any>(null);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerLoading, setDrawerLoading] = useState(false);
+  const [drawerError, setDrawerError] = useState<string | null>(null);
+
+  const handleSelectDoc = async (doc: any) => {
+    setSelectedDoc(doc);
+    setDrawerOpen(true);
+    setDrawerLoading(true);
+    setDrawerError(null);
+
+    let doctype = "";
+    if (activeTab === "po") doctype = "Purchase Order";
+    else if (activeTab === "pi") doctype = "Purchase Invoice";
+    else if (activeTab === "so") doctype = "Sales Order";
+    else if (activeTab === "si") doctype = "Sales Invoice";
+    else if (activeTab === "expense") doctype = "Expense Claim";
+    else if (activeTab === "timesheet") doctype = "Timesheet";
+
+    try {
+      const res = await fetch(`/api/erp/doc?doctype=${encodeURIComponent(doctype)}&name=${encodeURIComponent(doc.name)}`);
+      const result = await res.json();
+      if (result.success) {
+        setSelectedDoc(result.data);
+      } else {
+        setDrawerError(result.error || "Failed to load document details.");
+      }
+    } catch (err: any) {
+      setDrawerError(err.message || "An error occurred while fetching details.");
+    } finally {
+      setDrawerLoading(false);
+    }
+  };
 
   // Filter States
   const [projectCode, setProjectCode] = useState("PROJ-0021");
@@ -536,10 +567,7 @@ export default function ErpPage() {
                     return (
                       <div
                         key={doc.name}
-                        onClick={() => {
-                          setSelectedDoc(doc);
-                          setDrawerOpen(true);
-                        }}
+                        onClick={() => handleSelectDoc(doc)}
                         className="group relative bg-white border border-slate-200/80 rounded-2xl p-5 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 cursor-pointer overflow-hidden flex flex-col justify-between"
                       >
                         {/* Soft background glow */}
@@ -585,10 +613,7 @@ export default function ErpPage() {
                           
                           <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
                             <button
-                              onClick={() => {
-                                setSelectedDoc(doc);
-                                setDrawerOpen(true);
-                              }}
+                              onClick={() => handleSelectDoc(doc)}
                               className="inline-flex items-center gap-1 text-[10px] font-black uppercase text-emerald-600 bg-emerald-50 hover:bg-emerald-600 hover:text-white px-2.5 py-1.5 rounded-lg border border-emerald-100/50 transition-all cursor-pointer"
                             >
                               Details
@@ -725,198 +750,219 @@ export default function ErpPage() {
 
                 {/* Drawer Body */}
                 <div className="flex-1 overflow-y-auto p-6 space-y-6">
-                  {/* General Stats / Quick Glance Card */}
-                  <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-2xl p-5 shadow-sm">
-                    <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
-                      <Info className="w-3.5 h-3.5 text-slate-400" /> Summary Info
-                    </h3>
-                    
-                    <div className="grid grid-cols-2 gap-4">
-                      {/* Left Block */}
-                      <div>
-                        {activeTab === "po" || activeTab === "pi" ? (
-                          <>
-                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Supplier</span>
-                            <p className="text-xs font-black text-slate-700 uppercase mt-0.5 truncate">{selectedDoc.supplier || "—"}</p>
-                          </>
-                        ) : activeTab === "so" || activeTab === "si" ? (
-                          <>
-                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Customer</span>
-                            <p className="text-xs font-black text-slate-700 uppercase mt-0.5 truncate">{selectedDoc.customer || "—"}</p>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Employee</span>
-                            <p className="text-xs font-black text-slate-700 uppercase mt-0.5 truncate">{selectedDoc.employee_name || selectedDoc.employee || "—"}</p>
-                          </>
-                        )}
-                      </div>
-
-                      {/* Right Block */}
-                      <div>
-                        {selectedDoc.grand_total !== undefined || selectedDoc.total_claimed_amount !== undefined ? (
-                          <>
-                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Value Amount</span>
-                            <p className="text-sm font-black text-emerald-600 mt-0.5">
-                              {formatCurrency(selectedDoc.grand_total ?? selectedDoc.total_claimed_amount ?? 0)}
-                            </p>
-                          </>
-                        ) : selectedDoc.total_hours !== undefined ? (
-                          <>
-                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Duration</span>
-                            <p className="text-sm font-black text-indigo-600 mt-0.5">{selectedDoc.total_hours} Hours</p>
-                          </>
-                        ) : (
-                          <>
-                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Project</span>
-                            <p className="text-xs font-black text-slate-700 uppercase mt-0.5">{selectedDoc.project || "—"}</p>
-                          </>
-                        )}
-                      </div>
+                  {drawerLoading ? (
+                    <div className="h-full flex flex-col items-center justify-center py-20 gap-3">
+                      <Loader2 className="w-8 h-8 text-emerald-600 animate-spin" />
+                      <p className="text-xs font-black text-slate-400 uppercase tracking-widest animate-pulse">
+                        Fetching related ERP data...
+                      </p>
                     </div>
-                  </div>
-
-                  {/* Complete Document Fields */}
-                  <div className="space-y-4">
-                    <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">Document Details</h3>
-                    <div className="grid grid-cols-2 gap-x-6 gap-y-4">
-                      {/* Dynamic Human-readable Key-Values */}
-                      {Object.entries(selectedDoc).map(([key, val]: [string, any]) => {
-                        // Skip nested tables/arrays and long internal fields
-                        if (typeof val === "object" || Array.isArray(val) || key.startsWith("_") || !val) return null;
+                  ) : drawerError ? (
+                    <div className="h-full flex flex-col items-center justify-center py-20 gap-3 text-rose-500">
+                      <AlertCircle className="w-8 h-8" />
+                      <p className="text-xs font-black uppercase tracking-widest">
+                        Failed to Load Details
+                      </p>
+                      <p className="text-xs font-medium text-slate-400 max-w-xs text-center">
+                        {drawerError}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {/* General Stats / Quick Glance Card */}
+                      <div className="bg-gradient-to-br from-slate-50 to-slate-100 border border-slate-200 rounded-2xl p-5 shadow-sm">
+                        <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 mb-3 flex items-center gap-1.5">
+                          <Info className="w-3.5 h-3.5 text-slate-400" /> Summary Info
+                        </h3>
                         
-                        // Human-friendly titles
-                        const cleanKey = key.replace(/_/g, " ").toUpperCase();
-                        
-                        // Determine if it should span 2 columns
-                        const isLongField = 
-                          key === "terms" || 
-                          key === "other_charges_calculation" || 
-                          key.includes("address") || 
-                          key.includes("display") ||
-                          key === "remarks" || 
-                          key === "description" ||
-                          key === "in_words";
-
-                        const isHtml = typeof val === "string" && (val.includes("<") && val.includes(">"));
-                        
-                        return (
-                          <div key={key} className={`border-b border-slate-100 pb-2.5 ${isLongField ? "col-span-2" : "col-span-1"}`}>
-                            <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">{cleanKey}</span>
-                            {isHtml ? (
-                              <div 
-                                className="text-xs font-semibold text-slate-700 mt-1 select-text html-content-wrapper"
-                                dangerouslySetInnerHTML={{ __html: val }}
-                              />
+                        <div className="grid grid-cols-2 gap-4">
+                          {/* Left Block */}
+                          <div>
+                            {activeTab === "po" || activeTab === "pi" ? (
+                              <>
+                                <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Supplier</span>
+                                <p className="text-xs font-black text-slate-700 uppercase mt-0.5 truncate">{selectedDoc.supplier || "—"}</p>
+                              </>
+                            ) : activeTab === "so" || activeTab === "si" ? (
+                              <>
+                                <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Customer</span>
+                                <p className="text-xs font-black text-slate-700 uppercase mt-0.5 truncate">{selectedDoc.customer || "—"}</p>
+                              </>
                             ) : (
-                              <p className="text-xs font-semibold text-slate-700 mt-0.5 break-words select-text">
-                                {typeof val === "number" && (key.includes("total") || key.includes("amount") || key.includes("rate"))
-                                  ? formatCurrency(val)
-                                  : String(val)}
-                              </p>
+                              <>
+                                <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Employee</span>
+                                <p className="text-xs font-black text-slate-700 uppercase mt-0.5 truncate">{selectedDoc.employee_name || selectedDoc.employee || "—"}</p>
+                              </>
                             )}
                           </div>
-                        );
-                      })}
-                    </div>
-                  </div>
 
-                  {/* Embedded line items or logs if present */}
-                  {selectedDoc.items && Array.isArray(selectedDoc.items) && selectedDoc.items.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
-                        Line Items ({selectedDoc.items.length})
-                      </h3>
-                      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                        <table className="w-full text-left border-collapse">
-                          <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200">
-                            <tr>
-                              <th className="py-2.5 px-4">Item Details</th>
-                              <th className="py-2.5 px-4 text-center">Qty</th>
-                              <th className="py-2.5 px-4 text-right">Rate</th>
-                              <th className="py-2.5 px-4 text-right pr-4">Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody className="text-[11px] font-bold text-slate-600 divide-y divide-slate-100">
-                            {selectedDoc.items.map((item: any, i: number) => (
-                              <tr key={i} className="hover:bg-slate-50/50">
-                                <td className="py-2.5 px-4">
-                                  <p className="font-extrabold text-slate-800">{item.item_code}</p>
-                                  {item.item_name && <p className="text-[9px] text-slate-400 mt-0.5">{item.item_name}</p>}
-                                </td>
-                                <td className="py-2.5 px-4 text-center">{item.qty} {item.uom || ""}</td>
-                                <td className="py-2.5 px-4 text-right">{formatCurrency(item.rate || 0)}</td>
-                                <td className="py-2.5 px-4 text-right pr-4 text-emerald-600 font-extrabold">{formatCurrency(item.amount || 0)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                          {/* Right Block */}
+                          <div>
+                            {selectedDoc.grand_total !== undefined || selectedDoc.total_claimed_amount !== undefined ? (
+                              <>
+                                <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Value Amount</span>
+                                <p className="text-sm font-black text-emerald-600 mt-0.5">
+                                  {formatCurrency(selectedDoc.grand_total ?? selectedDoc.total_claimed_amount ?? 0)}
+                                </p>
+                              </>
+                            ) : selectedDoc.total_hours !== undefined ? (
+                              <>
+                                <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Duration</span>
+                                <p className="text-sm font-black text-indigo-600 mt-0.5">{selectedDoc.total_hours} Hours</p>
+                              </>
+                            ) : (
+                              <>
+                                <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">Project</span>
+                                <p className="text-xs font-black text-slate-700 uppercase mt-0.5">{selectedDoc.project || "—"}</p>
+                              </>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
 
-                  {selectedDoc.expenses && Array.isArray(selectedDoc.expenses) && selectedDoc.expenses.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
-                        Expenses ({selectedDoc.expenses.length})
-                      </h3>
-                      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                        <table className="w-full text-left border-collapse">
-                          <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200">
-                            <tr>
-                              <th className="py-2.5 px-4">Type</th>
-                              <th className="py-2.5 px-4">Description</th>
-                              <th className="py-2.5 px-4 text-right pr-4">Amount</th>
-                            </tr>
-                          </thead>
-                          <tbody className="text-[11px] font-bold text-slate-600 divide-y divide-slate-100">
-                            {selectedDoc.expenses.map((expense: any, i: number) => (
-                              <tr key={i} className="hover:bg-slate-50/50">
-                                <td className="py-2.5 px-4 font-extrabold text-slate-800 uppercase">{expense.expense_type?.replace(/-/g, " ")}</td>
-                                <td className="py-2.5 px-4 text-slate-400 font-medium">{expense.description || "—"}</td>
-                                <td className="py-2.5 px-4 text-right pr-4 text-rose-600 font-extrabold">{formatCurrency(expense.amount || 0)}</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
-                  )}
+                      {/* Complete Document Fields */}
+                      <div className="space-y-4">
+                        <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">Document Details</h3>
+                        <div className="grid grid-cols-2 gap-x-6 gap-y-4">
+                          {/* Dynamic Human-readable Key-Values */}
+                          {Object.entries(selectedDoc).map(([key, val]: [string, any]) => {
+                            // Skip nested tables/arrays and long internal fields
+                            if (typeof val === "object" || Array.isArray(val) || key.startsWith("_") || !val) return null;
+                            
+                            // Human-friendly titles
+                            const cleanKey = key.replace(/_/g, " ").toUpperCase();
+                            
+                            // Determine if it should span 2 columns
+                            const isLongField = 
+                              key === "terms" || 
+                              key === "other_charges_calculation" || 
+                              key.includes("address") || 
+                              key.includes("display") ||
+                              key === "remarks" || 
+                              key === "description" ||
+                              key === "in_words";
 
-                  {selectedDoc.time_logs && Array.isArray(selectedDoc.time_logs) && selectedDoc.time_logs.length > 0 && (
-                    <div className="space-y-3">
-                      <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
-                        Activity Logs ({selectedDoc.time_logs.length})
-                      </h3>
-                      <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
-                        <table className="w-full text-left border-collapse">
-                          <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200">
-                            <tr>
-                              <th className="py-2.5 px-4">Activity</th>
-                              <th className="py-2.5 px-4">Timeframe</th>
-                              <th className="py-2.5 px-4 text-right pr-4">Hours</th>
-                            </tr>
-                          </thead>
-                          <tbody className="text-[11px] font-bold text-slate-600 divide-y divide-slate-100">
-                            {selectedDoc.time_logs.map((log: any, i: number) => (
-                              <tr key={i} className="hover:bg-slate-50/50">
-                                <td className="py-2.5 px-4">
-                                  <p className="font-extrabold text-slate-800 uppercase">{log.activity_type || "—"}</p>
-                                  {log.description && <p className="text-[9px] text-slate-400 mt-0.5">{log.description}</p>}
-                                </td>
-                                <td className="py-2.5 px-4 text-slate-400 font-medium">
-                                  <div className="flex flex-col">
-                                    <span>From: {log.from_time?.replace("T", " ") || "—"}</span>
-                                    <span>To: {log.to_time?.replace("T", " ") || "—"}</span>
-                                  </div>
-                                </td>
-                                <td className="py-2.5 px-4 text-right pr-4 text-indigo-600 font-extrabold">{log.hours} hrs</td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            const isHtml = typeof val === "string" && (val.includes("<") && val.includes(">"));
+                            
+                            return (
+                              <div key={key} className={`border-b border-slate-100 pb-2.5 ${isLongField ? "col-span-2" : "col-span-1"}`}>
+                                <span className="text-[9px] font-extrabold uppercase tracking-widest text-slate-400">{cleanKey}</span>
+                                {isHtml ? (
+                                  <div 
+                                    className="text-xs font-semibold text-slate-700 mt-1 html-content-wrapper select-text"
+                                    dangerouslySetInnerHTML={{ __html: val }}
+                                  />
+                                ) : (
+                                  <p className="text-xs font-semibold text-slate-700 mt-0.5 break-words select-text">
+                                    {typeof val === "number" && (key.includes("total") || key.includes("amount") || key.includes("rate"))
+                                      ? formatCurrency(val)
+                                      : String(val)}
+                                  </p>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
+
+                      {/* Embedded line items or logs if present */}
+                      {selectedDoc.items && Array.isArray(selectedDoc.items) && selectedDoc.items.length > 0 && (
+                        <div className="space-y-3">
+                          <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
+                            Line Items ({selectedDoc.items.length})
+                          </h3>
+                          <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                              <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                                <tr>
+                                  <th className="py-2.5 px-4">Item Details</th>
+                                  <th className="py-2.5 px-4 text-center">Qty</th>
+                                  <th className="py-2.5 px-4 text-right">Rate</th>
+                                  <th className="py-2.5 px-4 text-right pr-4">Amount</th>
+                                </tr>
+                              </thead>
+                              <tbody className="text-[11px] font-bold text-slate-600 divide-y divide-slate-100">
+                                {selectedDoc.items.map((item: any, i: number) => (
+                                  <tr key={i} className="hover:bg-slate-50/50">
+                                    <td className="py-2.5 px-4">
+                                      <p className="font-extrabold text-slate-800">{item.item_code}</p>
+                                      {item.item_name && <p className="text-[9px] text-slate-400 mt-0.5">{item.item_name}</p>}
+                                    </td>
+                                    <td className="py-2.5 px-4 text-center">{item.qty} {item.uom || ""}</td>
+                                    <td className="py-2.5 px-4 text-right">{formatCurrency(item.rate || 0)}</td>
+                                    <td className="py-2.5 px-4 text-right pr-4 text-emerald-600 font-extrabold">{formatCurrency(item.amount || 0)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedDoc.expenses && Array.isArray(selectedDoc.expenses) && selectedDoc.expenses.length > 0 && (
+                        <div className="space-y-3">
+                          <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
+                            Expenses ({selectedDoc.expenses.length})
+                          </h3>
+                          <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                              <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                                <tr>
+                                  <th className="py-2.5 px-4">Type</th>
+                                  <th className="py-2.5 px-4">Description</th>
+                                  <th className="py-2.5 px-4 text-right pr-4">Amount</th>
+                                </tr>
+                              </thead>
+                              <tbody className="text-[11px] font-bold text-slate-600 divide-y divide-slate-100">
+                                {selectedDoc.expenses.map((expense: any, i: number) => (
+                                  <tr key={i} className="hover:bg-slate-50/50">
+                                    <td className="py-2.5 px-4 font-extrabold text-slate-800 uppercase">{expense.expense_type?.replace(/-/g, " ")}</td>
+                                    <td className="py-2.5 px-4 text-slate-400 font-medium">{expense.description || "—"}</td>
+                                    <td className="py-2.5 px-4 text-right pr-4 text-rose-600 font-extrabold">{formatCurrency(expense.amount || 0)}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+
+                      {selectedDoc.time_logs && Array.isArray(selectedDoc.time_logs) && selectedDoc.time_logs.length > 0 && (
+                        <div className="space-y-3">
+                          <h3 className="text-[10px] font-black uppercase tracking-wider text-slate-400 border-b border-slate-100 pb-2">
+                            Activity Logs ({selectedDoc.time_logs.length})
+                          </h3>
+                          <div className="border border-slate-200 rounded-2xl overflow-hidden shadow-sm">
+                            <table className="w-full text-left border-collapse">
+                              <thead className="bg-slate-50 text-[9px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-200">
+                                <tr>
+                                  <th className="py-2.5 px-4">Activity</th>
+                                  <th className="py-2.5 px-4">Timeframe</th>
+                                  <th className="py-2.5 px-4 text-right pr-4">Hours</th>
+                                </tr>
+                              </thead>
+                              <tbody className="text-[11px] font-bold text-slate-600 divide-y divide-slate-100">
+                                {selectedDoc.time_logs.map((log: any, i: number) => (
+                                  <tr key={i} className="hover:bg-slate-50/50">
+                                    <td className="py-2.5 px-4">
+                                      <p className="font-extrabold text-slate-800 uppercase">{log.activity_type || "—"}</p>
+                                      {log.description && <p className="text-[9px] text-slate-400 mt-0.5">{log.description}</p>}
+                                    </td>
+                                    <td className="py-2.5 px-4 text-slate-400 font-medium">
+                                      <div className="flex flex-col">
+                                        <span>From: {log.from_time?.replace("T", " ") || "—"}</span>
+                                        <span>To: {log.to_time?.replace("T", " ") || "—"}</span>
+                                      </div>
+                                    </td>
+                                    <td className="py-2.5 px-4 text-right pr-4 text-indigo-600 font-extrabold">{log.hours} hrs</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
 
@@ -928,15 +974,17 @@ export default function ErpPage() {
                   >
                     Close
                   </button>
-                  <a
-                    href={`https://brihaspathi.m.frappe.cloud/app/${activeTab === "expense" ? "expense-claim" : activeTab === "timesheet" ? "timesheet" : activeTab === "po" ? "purchase-order" : activeTab === "pi" ? "purchase-invoice" : activeTab === "so" ? "sales-order" : "sales-invoice"}/${selectedDoc.name}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
-                  >
-                    <span>View in Frappe Cloud ERP</span>
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  {!drawerLoading && !drawerError && (
+                    <a
+                      href={`https://brihaspathi.m.frappe.cloud/app/${activeTab === "expense" ? "expense-claim" : activeTab === "timesheet" ? "timesheet" : activeTab === "po" ? "purchase-order" : activeTab === "pi" ? "purchase-invoice" : activeTab === "so" ? "sales-order" : "sales-invoice"}/${selectedDoc.name}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-black uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-md shadow-emerald-500/10"
+                    >
+                      <span>View in Frappe Cloud ERP</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  )}
                 </div>
               </div>
             </div>
