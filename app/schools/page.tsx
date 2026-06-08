@@ -397,7 +397,7 @@ export default function SchoolsPage() {
           </div>
         )}
 
-        <div className="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between gap-6 shrink-0 overflow-x-auto scrollbar-none">
+        <div className="bg-white border-b border-slate-200 px-4 md:px-6 py-4 flex flex-col 2xl:flex-row items-start 2xl:items-center justify-between gap-4 shrink-0 relative z-20">
           {/* Left: Title */}
           <div className="flex items-center gap-3 shrink-0">
             <div className="w-9 h-9 bg-emerald-50 rounded-xl flex items-center justify-center text-emerald-600 shadow-sm border border-emerald-100 shrink-0">
@@ -409,11 +409,11 @@ export default function SchoolsPage() {
             </div>
           </div>
 
-          {/* Right: Filters & Controls in a single row */}
-          <div className="flex items-center gap-3 shrink-0">
+          {/* Right: Filters & Controls */}
+          <div className="flex flex-wrap items-center gap-3 w-full 2xl:w-auto">
 
-            {/* District dropdown (Label Removed) */}
-            <div className="w-44 shrink-0">
+            {/* District dropdown */}
+            <div className="w-full sm:w-44 shrink-0">
               <SearchableSelect
                 value={selectedDistrict}
                 onChange={(val) => {
@@ -428,8 +428,8 @@ export default function SchoolsPage() {
               />
             </div>
 
-            {/* School dropdown (Label Removed) */}
-            <div className="w-56 shrink-0">
+            {/* School dropdown */}
+            <div className="w-full sm:w-56 shrink-0">
               <SearchableSelect
                 value={selectedSchoolId}
                 onChange={(val) => setSelectedSchoolId(val)}
@@ -441,8 +441,8 @@ export default function SchoolsPage() {
               />
             </div>
 
-            {/* System Count dropdown (1 single system, 2 double systems, etc.) */}
-            <div className="w-48 shrink-0">
+            {/* System Count dropdown */}
+            <div className="w-full sm:w-48 shrink-0">
               <SearchableSelect
                 value={selectedSystemFilter}
                 onChange={(val) => setSelectedSystemFilter(val)}
@@ -458,7 +458,7 @@ export default function SchoolsPage() {
             </div>
 
             {/* Installation Status dropdown */}
-            <div className="w-44 shrink-0">
+            <div className="w-full sm:w-44 shrink-0">
               <SearchableSelect
                 value={selectedStatus}
                 onChange={(val) => setSelectedStatus(val)}
@@ -476,7 +476,7 @@ export default function SchoolsPage() {
             {(searchTerm || selectedDistrict || selectedSchoolId || selectedSystemFilter || selectedStatus) && (
               <button
                 onClick={handleResetFilters}
-                className="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center gap-1 uppercase tracking-wider shadow-sm shrink-0"
+                className="px-3 py-1.5 w-full sm:w-auto bg-slate-100 hover:bg-slate-200 text-slate-600 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 uppercase tracking-wider shadow-sm shrink-0"
               >
                 Clear
               </button>
@@ -484,48 +484,48 @@ export default function SchoolsPage() {
 
             <div className="w-px h-5 bg-slate-200 hidden sm:block shrink-0"></div>
 
-            {/* Four-Way View Mode Toggler */}
-            <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200 shadow-inner shrink-0">
-              <button
-                onClick={() => setViewMode("grid")}
-                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${viewMode === "grid" ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
-                title="Grid View"
-              >
-                <Grid className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Grid</span>
-              </button>
-              <button
-                onClick={() => setViewMode("list")}
-                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${viewMode === "list" ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
-                title="List View"
-              >
-                <List className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">List</span>
-              </button>
-              <button
-                onClick={() => setViewMode("table")}
-                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${viewMode === "table" ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
-                title="Table View"
-              >
-                <Table className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Table</span>
-              </button>
-              <button
-                onClick={() => setViewMode("kanban")}
-                className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${viewMode === "kanban" ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
-                title="Kanban View"
-              >
-                <Kanban className="w-3.5 h-3.5" />
-                <span className="hidden md:inline">Kanban</span>
-              </button>
-            </div>
+            <div className="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-start">
+              {/* Four-Way View Mode Toggler */}
+              <div className="flex bg-slate-100 p-0.5 rounded-xl border border-slate-200 shadow-inner shrink-0">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${viewMode === "grid" ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
+                  title="Grid View"
+                >
+                  <Grid className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Grid</span>
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${viewMode === "list" ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
+                  title="List View"
+                >
+                  <List className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">List</span>
+                </button>
+                <button
+                  onClick={() => setViewMode("table")}
+                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${viewMode === "table" ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
+                  title="Table View"
+                >
+                  <Table className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Table</span>
+                </button>
+                <button
+                  onClick={() => setViewMode("kanban")}
+                  className={`px-2.5 py-1.5 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all flex items-center gap-1.5 ${viewMode === "kanban" ? "bg-white text-emerald-600 shadow-sm border border-slate-200/50" : "text-slate-400 hover:text-slate-600"}`}
+                  title="Kanban View"
+                >
+                  <Kanban className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Kanban</span>
+                </button>
+              </div>
 
-            <div className="w-px h-5 bg-slate-200 hidden sm:block shrink-0"></div>
-
-            {/* Total count badge */}
-            <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1.5 rounded-lg shadow-sm shrink-0 uppercase tracking-wider">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              {schools.length} schools
+              {/* Total count badge */}
+              <div className="flex items-center gap-2 text-[10px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2.5 py-1.5 rounded-lg shadow-sm shrink-0 uppercase tracking-wider">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                {schools.length} schools
+              </div>
             </div>
           </div>
         </div>
