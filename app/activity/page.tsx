@@ -15,6 +15,7 @@ import {
   Filter,
   Check,
   Inbox,
+  Clock,
 } from "lucide-react";
 import { SessionNavBar } from "@/components/ui/sidebar";
 
@@ -34,6 +35,42 @@ const FILTERS = [
   { key: "Wrench", label: "Service", icon: Wrench },
   { key: "Zap", label: "Solar", icon: Zap },
 ];
+
+function formatDuration(seconds: number) {
+  if (!seconds || seconds <= 0) return "Just started";
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  const s = seconds % 60;
+  if (h > 0) return `${h}h ${m}m`;
+  if (m > 0) return `${m}m ${s}s`;
+  return `${s}s`;
+}
+
+function parseUserAgent(ua: string) {
+  if (!ua) return "Unknown Device";
+  const lower = ua.toLowerCase();
+  let os = "Device";
+  let browser = "Browser";
+
+  if (lower.includes("windows")) os = "Windows";
+  else if (lower.includes("macintosh") || lower.includes("mac os")) os = "macOS";
+  else if (lower.includes("android")) os = "Android";
+  else if (lower.includes("iphone") || lower.includes("ipad")) os = "iOS";
+  else if (lower.includes("linux")) os = "Linux";
+
+  if (lower.includes("chrome") || lower.includes("crios")) browser = "Chrome";
+  else if (lower.includes("firefox")) browser = "Firefox";
+  else if (lower.includes("safari") && !lower.includes("chrome")) browser = "Safari";
+  else if (lower.includes("edge")) browser = "Edge";
+  
+  return `${os} • ${browser}`;
+}
+
+function isSessionOnline(lastActiveStr: string) {
+  if (!lastActiveStr) return false;
+  const diff = Date.now() - new Date(lastActiveStr).getTime();
+  return diff < 45000;
+}
 
 function timeAgo(dateString: string) {
   const diff = Math.max(0, Date.now() - new Date(dateString).getTime());
@@ -72,6 +109,9 @@ export default function ActivityPage() {
   const [query, setQuery] = useState("");
   const [activeFilter, setActiveFilter] = useState("all");
 
+  const [sessions, setSessions] = useState<any[]>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(true);
+
   const fetchActivities = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
     setError("");
@@ -91,9 +131,28 @@ export default function ActivityPage() {
     }
   }, []);
 
+  const fetchSessions = useCallback(async () => {
+    try {
+      setSessionsLoading(true);
+      const res = await fetch(`/api/admin/sessions?t=${Date.now()}`, { cache: "no-store" });
+      const result = await res.json();
+      if (result.success) {
+        setSessions(result.data || []);
+      }
+    } catch (err) {
+      console.error("Failed to load user login sessions", err);
+    } finally {
+      setSessionsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchActivities();
-  }, [fetchActivities]);
+    fetchSessions();
+
+    const interval = setInterval(fetchSessions, 10000);
+    return () => clearInterval(interval);
+  }, [fetchActivities, fetchSessions]);
 
   // Filter + search
   const filtered = useMemo(() => {
@@ -131,7 +190,7 @@ export default function ActivityPage() {
       <SessionNavBar />
 
       <main className="flex-1 overflow-y-auto">
-        <div className="p-5 sm:p-8 lg:p-10 max-w-5xl mx-auto">
+        <div className="p-5 sm:p-8 lg:p-10 max-w-7xl mx-auto">
           {/* ── Header ── */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-7">
             <div className="flex items-center gap-4">
@@ -160,7 +219,10 @@ export default function ActivityPage() {
             </div>
 
             <button
-              onClick={() => fetchActivities(true)}
+              onClick={() => {
+                fetchActivities(true);
+                fetchSessions();
+              }}
               disabled={refreshing}
               className="self-start sm:self-auto inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-bold text-slate-700 shadow-sm hover:border-emerald-300 hover:text-emerald-700 hover:shadow transition-all disabled:opacity-60"
             >
@@ -178,129 +240,216 @@ export default function ActivityPage() {
             </div>
           )}
 
-          {/* ── Controls: search + filters ── */}
-          {!loading && !error && activities.length > 0 && (
-            <div className="flex flex-col lg:flex-row gap-3 mb-6">
-              <div className="relative flex-1">
-                <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
-                <input
-                  value={query}
-                  onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search events…"
-                  className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 transition-all"
-                />
-              </div>
+          {/* ── Split Layout Grid ── */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+            
+            {/* Left 2 Columns: Controls & Activity Feed */}
+            <div className="lg:col-span-2 flex flex-col gap-6">
+              
+              {/* ── Controls: search + filters ── */}
+              {!loading && !error && activities.length > 0 && (
+                <div className="flex flex-col md:flex-row gap-3">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+                    <input
+                      value={query}
+                      onChange={(e) => setQuery(e.target.value)}
+                      placeholder="Search events…"
+                      className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-white border border-slate-200 text-sm font-medium text-slate-700 placeholder:text-slate-400 outline-none focus:border-emerald-400 focus:ring-4 focus:ring-emerald-500/10 transition-all"
+                    />
+                  </div>
 
-              <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 lg:pb-0">
-                <Filter className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" />
-                {FILTERS.map((f) => {
-                  const Ico = f.icon;
-                  const active = activeFilter === f.key;
-                  return (
+                  <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-1 md:pb-0">
+                    <Filter className="w-4 h-4 text-slate-400 shrink-0 hidden sm:block" />
+                    {FILTERS.map((f) => {
+                      const Ico = f.icon;
+                      const active = activeFilter === f.key;
+                      return (
+                        <button
+                          key={f.key}
+                          onClick={() => setActiveFilter(f.key)}
+                          className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${active
+                            ? "bg-emerald-500 border-emerald-500 text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]"
+                            : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
+                            }`}
+                        >
+                          <Ico className="w-3.5 h-3.5" />
+                          {f.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* ── Feed Container ── */}
+              <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden p-5 sm:p-8 lg:p-10 relative">
+                {loading ? (
+                  <SkeletonFeed />
+                ) : error ? (
+                  <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
+                    <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 mb-4">
+                      <AlertCircle className="w-7 h-7" />
+                    </div>
+                    <p className="font-black text-slate-700">Couldn't load activities</p>
+                    <p className="text-sm font-semibold text-slate-400 mt-1 max-w-sm">{error}</p>
                     <button
-                      key={f.key}
-                      onClick={() => setActiveFilter(f.key)}
-                      className={`shrink-0 inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-bold border transition-all ${active
-                        ? "bg-emerald-500 border-emerald-500 text-white shadow-[0_4px_12px_rgba(16,185,129,0.3)]"
-                        : "bg-white border-slate-200 text-slate-600 hover:border-emerald-300 hover:text-emerald-700"
-                        }`}
+                      onClick={() => fetchActivities(true)}
+                      className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 text-white text-sm font-bold hover:bg-slate-900 transition-colors"
                     >
-                      <Ico className="w-3.5 h-3.5" />
-                      {f.label}
+                      <RefreshCw className="w-4 h-4" /> Try again
                     </button>
-                  );
-                })}
+                  </div>
+                ) : activities.length === 0 ? (
+                  <EmptyState
+                    icon={<Activity className="w-8 h-8" />}
+                    title="No activities logged yet"
+                    subtitle="Events will appear here as they happen across the platform."
+                  />
+                ) : filtered.length === 0 ? (
+                  <EmptyState
+                    icon={<Inbox className="w-8 h-8" />}
+                    title="No matching events"
+                    subtitle="Try adjusting your search or filter."
+                  />
+                ) : (
+                  <div className="flex flex-col gap-9">
+                    {grouped.map(({ group, items }) => (
+                      <div key={group}>
+                        {/* Group header */}
+                        <div className="flex items-center gap-3 mb-5">
+                          <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">
+                            {group}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
+                            {items.length}
+                          </span>
+                          <div className="flex-1 h-px bg-slate-100" />
+                        </div>
+
+                        {/* Timeline */}
+                        <div className="relative">
+                          <div className="absolute left-[27px] top-3 bottom-3 w-[2px] bg-gradient-to-b from-slate-100 via-slate-100 to-transparent rounded-full" />
+                          <div className="flex flex-col gap-7">
+                            {items.map((activity, idx) => {
+                              const IconComponent = iconMap[activity.icon] || Activity;
+                              return (
+                                <div
+                                  key={activity.id}
+                                  className="flex gap-4 sm:gap-6 relative z-10 group animate-fadeInUp"
+                                  style={{ animationDelay: `${Math.min(idx * 40, 320)}ms` }}
+                                >
+                                  {/* Icon node */}
+                                  <div
+                                    className={`w-[52px] h-[52px] sm:w-[56px] sm:h-[56px] shrink-0 rounded-2xl flex items-center justify-center border-4 border-white shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md ${activity.bg} ${activity.color}`}
+                                  >
+                                    <IconComponent className="w-5 h-5 sm:w-6 sm:h-6" />
+                                  </div>
+
+                                  {/* Content */}
+                                  <div className="flex-1 pt-1.5 pb-1.5 min-w-0">
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 mb-1">
+                                      <h3 className="text-[15px] sm:text-[16px] font-extrabold text-slate-800 truncate">
+                                        {activity.title}
+                                      </h3>
+                                      <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-slate-400 bg-slate-100 px-3 py-1 rounded-full w-fit">
+                                        {timeAgo(activity.timestamp)}
+                                      </span>
+                                    </div>
+                                    <p className="text-[13px] sm:text-[14px] font-semibold text-slate-500 leading-relaxed">
+                                      {activity.desc}
+                                    </p>
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
-          )}
 
-          {/* ── Feed ── */}
-          <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm overflow-hidden p-5 sm:p-8 lg:p-10 relative">
-            {loading ? (
-              <SkeletonFeed />
-            ) : error ? (
-              <div className="flex flex-col items-center justify-center py-16 sm:py-20 text-center">
-                <div className="w-14 h-14 rounded-2xl bg-rose-50 border border-rose-100 flex items-center justify-center text-rose-500 mb-4">
-                  <AlertCircle className="w-7 h-7" />
+            {/* Right Column: Live Session tracker */}
+            <div className="lg:col-span-1 flex flex-col gap-6 select-text">
+              <div className="bg-white rounded-[24px] border border-slate-200 shadow-sm p-6">
+                <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                    <h3 className="text-xs font-black uppercase tracking-wider text-slate-800">Live Staff Monitor</h3>
+                  </div>
+                  <span className="text-[10px] font-black text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full uppercase tracking-wider">
+                    {sessions.filter(s => isSessionOnline(s.last_active_time)).length} Online
+                  </span>
                 </div>
-                <p className="font-black text-slate-700">Couldn't load activities</p>
-                <p className="text-sm font-semibold text-slate-400 mt-1 max-w-sm">{error}</p>
-                <button
-                  onClick={() => fetchActivities(true)}
-                  className="mt-5 inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-slate-800 text-white text-sm font-bold hover:bg-slate-900 transition-colors"
-                >
-                  <RefreshCw className="w-4 h-4" /> Try again
-                </button>
-              </div>
-            ) : activities.length === 0 ? (
-              <EmptyState
-                icon={<Activity className="w-8 h-8" />}
-                title="No activities logged yet"
-                subtitle="Events will appear here as they happen across the platform."
-              />
-            ) : filtered.length === 0 ? (
-              <EmptyState
-                icon={<Inbox className="w-8 h-8" />}
-                title="No matching events"
-                subtitle="Try adjusting your search or filter."
-              />
-            ) : (
-              <div className="flex flex-col gap-9">
-                {grouped.map(({ group, items }) => (
-                  <div key={group}>
-                    {/* Group header */}
-                    <div className="flex items-center gap-3 mb-5">
-                      <span className="text-[11px] font-black uppercase tracking-widest text-slate-400">
-                        {group}
-                      </span>
-                      <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-2 py-0.5 rounded-full">
-                        {items.length}
-                      </span>
-                      <div className="flex-1 h-px bg-slate-100" />
-                    </div>
 
-                    {/* Timeline */}
-                    <div className="relative">
-                      <div className="absolute left-[27px] top-3 bottom-3 w-[2px] bg-gradient-to-b from-slate-100 via-slate-100 to-transparent rounded-full" />
-                      <div className="flex flex-col gap-7">
-                        {items.map((activity, idx) => {
-                          const IconComponent = iconMap[activity.icon] || Activity;
-                          return (
-                            <div
-                              key={activity.id}
-                              className="flex gap-4 sm:gap-6 relative z-10 group animate-fadeInUp"
-                              style={{ animationDelay: `${Math.min(idx * 40, 320)}ms` }}
-                            >
-                              {/* Icon node */}
-                              <div
-                                className={`w-[52px] h-[52px] sm:w-[56px] sm:h-[56px] shrink-0 rounded-2xl flex items-center justify-center border-4 border-white shadow-sm transition-all duration-300 group-hover:scale-110 group-hover:shadow-md ${activity.bg} ${activity.color}`}
-                              >
-                                <IconComponent className="w-5 h-5 sm:w-6 sm:h-6" />
-                              </div>
+                {sessionsLoading && sessions.length === 0 ? (
+                  <div className="py-8 flex justify-center items-center">
+                    <Loader2 className="w-5 h-5 text-emerald-500 animate-spin" />
+                  </div>
+                ) : sessions.length === 0 ? (
+                  <div className="py-8 text-center text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    No active sessions
+                  </div>
+                ) : (
+                  <div className="flex flex-col gap-4 max-h-[550px] overflow-y-auto pr-1 no-scrollbar">
+                    {sessions.map((session: any) => {
+                      const userData = session.users || {};
+                      const roleName = userData.roles?.role_name || "Staff";
+                      const online = isSessionOnline(session.last_active_time);
+                      const initials = userData.full_name
+                        ? userData.full_name.split(" ").map((n: string) => n[0]).join("").slice(0, 2).toUpperCase()
+                        : "US";
 
-                              {/* Content */}
-                              <div className="flex-1 pt-1.5 pb-1.5 min-w-0">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5 sm:gap-3 mb-1">
-                                  <h3 className="text-[15px] sm:text-[16px] font-extrabold text-slate-800 truncate">
-                                    {activity.title}
-                                  </h3>
-                                  <span className="shrink-0 text-[10px] font-black uppercase tracking-wider text-slate-400 bg-slate-100 px-3 py-1 rounded-full w-fit">
-                                    {timeAgo(activity.timestamp)}
-                                  </span>
-                                </div>
-                                <p className="text-[13px] sm:text-[14px] font-semibold text-slate-500 leading-relaxed">
-                                  {activity.desc}
-                                </p>
+                      return (
+                        <div key={session.id} className="flex items-start justify-between p-3 rounded-xl hover:bg-slate-50/50 border border-slate-55 transition-all">
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-700 font-black flex items-center justify-center shrink-0 uppercase text-[11px] border border-emerald-100 relative">
+                              {initials}
+                              {online && (
+                                <span className="absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full bg-emerald-500 border border-white animate-pulse"></span>
+                              )}
+                            </div>
+                            <div className="flex flex-col min-w-0">
+                              <span className="text-slate-800 font-extrabold text-[11px] truncate uppercase leading-tight">
+                                {userData.full_name || 'Unknown User'}
+                              </span>
+                              <span className="text-[9px] text-slate-400 font-semibold truncate lowercase mb-1.5 leading-none">
+                                {userData.email || '—'}
+                              </span>
+                              <div className="flex items-center gap-1.5 flex-wrap">
+                                <span className={`inline-flex px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-wider ${
+                                  roleName === "Super Admin" ? "bg-purple-50 text-purple-700 border border-purple-100" :
+                                  roleName === "Viewer" ? "bg-slate-100 text-slate-500 border border-slate-200" :
+                                  "bg-blue-50 text-blue-700 border border-blue-100"
+                                }`}>
+                                  {roleName}
+                                </span>
+                                <span className="text-[9px] text-slate-400 font-bold flex items-center gap-0.5">
+                                  <Clock className="w-3 h-3 text-slate-400 shrink-0" />
+                                  {formatDuration(session.duration_seconds)}
+                                </span>
                               </div>
                             </div>
-                          );
-                        })}
-                      </div>
-                    </div>
+                          </div>
+                          <div className="text-right shrink-0">
+                            <span className="block text-[8px] text-slate-550 font-extrabold uppercase">
+                              {parseUserAgent(session.user_agent).split(" • ")[0]}
+                            </span>
+                            <span className="block text-[8px] text-slate-400 font-medium">
+                              IP: {session.ip_address || "—"}
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
-                ))}
+                )}
               </div>
-            )}
+            </div>
+
           </div>
         </div>
       </main>
