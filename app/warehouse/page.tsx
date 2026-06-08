@@ -158,7 +158,7 @@ export default function WarehousePage() {
     try {
       const parsed = JSON.parse(storedUser);
       const role = parsed.roles?.role_name || parsed.role;
-      if (role !== "Super Admin") {
+      if (role !== "Super Admin" && role !== "Viewer") {
         router.push("/login");
         return;
       }

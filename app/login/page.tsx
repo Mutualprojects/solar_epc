@@ -28,7 +28,7 @@ export default function LoginPage() {
       try {
         const parsed = JSON.parse(storedUser);
         const role = parsed.roles?.role_name || parsed.role || "";
-        if (role === "Super Admin") {
+        if (role === "Super Admin" || role === "Viewer") {
           router.replace("/dashboard/superadmin");
         } else {
           router.replace("/inventory");
@@ -61,10 +61,10 @@ export default function LoginPage() {
 
         const role = data.user.roles?.role_name || "";
         setTimeout(() => {
-          if (role === "Super Admin") {
+          if (role === "Super Admin" || role === "Viewer") {
             router.push("/dashboard/superadmin");
           } else {
-            router.push("/dashboard");
+            router.push("/inventory");
           }
         }, 1000);
       } else {
