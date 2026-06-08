@@ -56,7 +56,7 @@ const AnimatedCounter = ({ value }: { value: number }) => {
 
     const duration = 800; // Animation duration in ms
     const stepTime = Math.abs(Math.floor(duration / end)) || 15;
-    
+
     const timer = setInterval(() => {
       start += Math.ceil(end / 40); // Proportional increments
       if (start >= end) {
@@ -640,10 +640,7 @@ export default function SuperAdminDashboard() {
 
           {/* Header Title Section */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 select-none shrink-0">
-            <div>
-              <h2 className="text-3xl font-extrabold text-slate-800 tracking-tight leading-none mb-2">Command Center</h2>
-              <p className="text-sm font-semibold text-slate-455">Real-time solar EPC dashboard and dynamic school installation analytics.</p>
-            </div>
+
 
             <div className="flex items-center gap-3">
               <button
@@ -695,7 +692,7 @@ export default function SuperAdminDashboard() {
               ) : (
                 <>
                   {/* Card 1: Total Installed */}
-                  <div 
+                  <div
                     onClick={() => handleOpenKpiDrawer(
                       "total_installed",
                       "Total Installed",
@@ -722,7 +719,7 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 2: Pending Installations */}
-                  <div 
+                  <div
                     onClick={() => handleOpenKpiDrawer(
                       "pending_installations",
                       "Pending Installations",
@@ -749,7 +746,7 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 3: Total Schools */}
-                  <div 
+                  <div
                     onClick={() => handleOpenKpiDrawer(
                       "total_schools",
                       "Total Schools",
@@ -773,7 +770,7 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 4: Total Systems */}
-                  <div 
+                  <div
                     onClick={() => handleOpenKpiDrawer(
                       "total_systems",
                       "Total Systems",
@@ -797,7 +794,7 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 5: Tank Completed */}
-                  <div 
+                  <div
                     onClick={() => handleOpenKpiDrawer(
                       "tank_completed",
                       "Tanks Completed",
@@ -821,7 +818,7 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 6: MMS Completed */}
-                  <div 
+                  <div
                     onClick={() => handleOpenKpiDrawer(
                       "mms_completed",
                       "MMS Completed",
@@ -845,7 +842,7 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 7: Collectors Completed */}
-                  <div 
+                  <div
                     onClick={() => handleOpenKpiDrawer(
                       "collectors_completed",
                       "Collectors Completed",
@@ -869,7 +866,7 @@ export default function SuperAdminDashboard() {
                   </div>
 
                   {/* Card 8: Plumbing Completed */}
-                  <div 
+                  <div
                     onClick={() => handleOpenKpiDrawer(
                       "plumbing_completed",
                       "Plumbing Completed",
@@ -917,20 +914,20 @@ export default function SuperAdminDashboard() {
                     <AreaChart data={finalProgressionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>
                         <linearGradient id="colorTank" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="colorMms" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#f59e0b" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="colorColl" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0} />
                         </linearGradient>
                         <linearGradient id="colorPlumb" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#0d9488" stopOpacity={0.2}/>
-                          <stop offset="95%" stopColor="#0d9488" stopOpacity={0}/>
+                          <stop offset="5%" stopColor="#0d9488" stopOpacity={0.2} />
+                          <stop offset="95%" stopColor="#0d9488" stopOpacity={0} />
                         </linearGradient>
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -995,7 +992,7 @@ export default function SuperAdminDashboard() {
 
           {/* ── DashboardFilter Component ── */}
           <DashboardFilter installations={installations} dataLoading={dataLoading} />
-          
+
 
         </div>
       </main>
@@ -1004,18 +1001,16 @@ export default function SuperAdminDashboard() {
       {selectedKpiDetails && (
         <div className="fixed inset-0 z-50 flex justify-end select-none">
           {/* Backdrop overlay */}
-          <div 
+          <div
             onClick={handleCloseKpiDrawer}
-            className={`fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity duration-300 ease-in-out ${
-              kpiDrawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
-            }`}
+            className={`fixed inset-0 bg-slate-900/40 backdrop-blur-[2px] transition-opacity duration-300 ease-in-out ${kpiDrawerOpen ? "opacity-100" : "opacity-0 pointer-events-none"
+              }`}
           />
 
           {/* Drawer Panel content */}
-          <div 
-            className={`relative w-full md:w-[850px] bg-[#f8fafc] h-full shadow-2xl border-l border-slate-200/80 flex flex-col z-50 transform transition-transform duration-300 ease-out ${
-              kpiDrawerOpen ? "translate-x-0" : "translate-x-full"
-            }`}
+          <div
+            className={`relative w-full md:w-[850px] bg-[#f8fafc] h-full shadow-2xl border-l border-slate-200/80 flex flex-col z-50 transform transition-transform duration-300 ease-out ${kpiDrawerOpen ? "translate-x-0" : "translate-x-full"
+              }`}
           >
             {/* Header */}
             <div className="px-6 py-5 bg-gradient-to-r from-slate-800 to-slate-950 text-white flex items-center justify-between shadow-md shrink-0 animate-fadeIn">
@@ -1032,7 +1027,7 @@ export default function SuperAdminDashboard() {
                   </p>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={handleCloseKpiDrawer}
                 className="p-1.5 hover:bg-white/10 rounded-xl transition-all cursor-pointer"
               >
@@ -1042,7 +1037,7 @@ export default function SuperAdminDashboard() {
 
             {/* Split layout for Analytics & School List */}
             <div className="flex-1 flex flex-col md:flex-row overflow-hidden min-h-0">
-              
+
               {/* Left Column: Analytics (collapsible/responsive) */}
               <div className="w-full md:w-[320px] bg-slate-50 border-r border-slate-200 p-6 flex flex-col gap-4 overflow-y-auto shrink-0 select-none">
                 <div>
@@ -1061,7 +1056,7 @@ export default function SuperAdminDashboard() {
 
                 <div className="bg-white rounded-2xl p-4 border border-slate-200 shadow-sm flex flex-col gap-3">
                   <h4 className="text-[10px] font-black text-slate-400 uppercase tracking-wider">Status Distribution</h4>
-                  
+
                   {drawerPieData.length === 0 ? (
                     <div className="h-[180px] flex items-center justify-center text-slate-400 text-xs font-bold">
                       No Records Available
@@ -1121,7 +1116,7 @@ export default function SuperAdminDashboard() {
 
               {/* Right Column: Interactive Search and School List */}
               <div className="flex-1 flex flex-col min-w-0 overflow-hidden bg-white">
-                
+
                 {/* Search / filter box */}
                 <div className="border-b border-slate-100 px-6 py-4 flex flex-col gap-2.5 shrink-0">
                   <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 shadow-sm w-full">
@@ -1159,7 +1154,7 @@ export default function SuperAdminDashboard() {
                       const isCompleted = item.overall_status === 'Completed';
 
                       return (
-                        <div 
+                        <div
                           key={item.id}
                           onClick={() => {
                             router.push(`/installations/${item.id}`);
@@ -1168,7 +1163,7 @@ export default function SuperAdminDashboard() {
                         >
                           {/* Left color bar */}
                           <div className={`absolute top-0 bottom-0 left-0 w-1.5 ${selectedKpiDetails.colorClass}`}></div>
-                          
+
                           <div className="pl-2.5 flex justify-between items-start gap-4">
                             <div className="min-w-0">
                               <h4 className="text-xs font-black text-slate-800 uppercase tracking-tight line-clamp-2 group-hover:text-emerald-700 transition-colors">
@@ -1186,11 +1181,10 @@ export default function SuperAdminDashboard() {
                               <span className="inline-flex px-2 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-100 rounded-md text-[9px] font-black uppercase tracking-wider">
                                 {sysCount} {sysCount === 1 ? 'System' : 'Systems'}
                               </span>
-                              <span className={`inline-flex px-2 py-0.5 border rounded-full text-[8px] font-black uppercase tracking-wider ${
-                                isCompleted ? 'bg-emerald-50 border-emerald-200 text-emerald-700' : 
+                              <span className={`inline-flex px-2 py-0.5 border rounded-full text-[8px] font-black uppercase tracking-wider ${isCompleted ? 'bg-emerald-50 border-emerald-200 text-emerald-700' :
                                 item.overall_status === 'In Progress' ? 'bg-amber-50 border-amber-200 text-amber-700' :
-                                'bg-slate-50 border-slate-200 text-slate-500'
-                              }`}>
+                                  'bg-slate-50 border-slate-200 text-slate-500'
+                                }`}>
                                 {item.overall_status || 'PENDING'}
                               </span>
                             </div>
@@ -1221,7 +1215,7 @@ export default function SuperAdminDashboard() {
 
             {/* Footer */}
             <div className="px-6 py-4 bg-white border-t border-slate-200 flex items-center justify-end select-none shrink-0 shadow-inner">
-              <button 
+              <button
                 onClick={handleCloseKpiDrawer}
                 className="w-full py-3 bg-slate-800 hover:bg-slate-900 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all cursor-pointer shadow-md font-['DM_Sans'] text-center hover:shadow-lg active:scale-98"
               >
