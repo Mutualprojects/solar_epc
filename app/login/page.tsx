@@ -639,21 +639,7 @@ export default function LoginPage() {
             <p style={{ fontSize: '9px', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '2px', color: '#94a3b8', marginBottom: '14px', textAlign: 'center', width: '100%' }}>
               Live Flow System
             </p>
-            <div style={{ position: 'relative', width: '100%' }}>
-              {/* Connecting line behind icons */}
-              <div style={{
-                position: 'absolute',
-                top: '28px',
-                left: '28px',
-                right: '28px',
-                height: '2px',
-                background: 'linear-gradient(90deg, #fbbf24, #f97316, #3b82f6, #6366f1)',
-                opacity: 0.3,
-                borderRadius: '2px',
-                zIndex: 0,
-              }} />
-
-              <div className="flow-inner" style={{ position: 'relative', zIndex: 1 }}>
+            <div className="flow-inner">
                 {/* Node 1 - Solar */}
                 <div className="flow-node">
                   <div className="flow-icon border-2 border-amber-100 text-amber-500 shadow-[0_4px_12px_rgba(245,158,11,0.2)]" style={{ background: '#fffbeb' }}>
@@ -662,12 +648,12 @@ export default function LoginPage() {
                   <span className="flow-label text-amber-600">Solar</span>
                 </div>
 
-                {/* Arrow 1 */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                {/* Arrow 1 - centered vertically at icon level */}
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', flex: 1, paddingTop: '15px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '2px', animation: 'slideArrow 1.4s ease-in-out infinite', animationDelay: '0s' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fbbf24', opacity: 0.7 }} />
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fbbf24', opacity: 0.5 }} />
-                    <ChevronRight size={16} style={{ color: '#f97316' }} />
+                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#fbbf24', opacity: 0.8 }} />
+                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#fb923c', opacity: 0.6 }} />
+                    <ChevronRight size={18} style={{ color: '#f97316' }} strokeWidth={2.5} />
                   </div>
                 </div>
 
@@ -680,11 +666,11 @@ export default function LoginPage() {
                 </div>
 
                 {/* Arrow 2 */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', flex: 1, paddingTop: '15px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '2px', animation: 'slideArrow 1.4s ease-in-out infinite', animationDelay: '0.35s' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fb923c', opacity: 0.7 }} />
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#fb923c', opacity: 0.5 }} />
-                    <ChevronRight size={16} style={{ color: '#3b82f6' }} />
+                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#fb923c', opacity: 0.8 }} />
+                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#60a5fa', opacity: 0.6 }} />
+                    <ChevronRight size={18} style={{ color: '#3b82f6' }} strokeWidth={2.5} />
                   </div>
                 </div>
 
@@ -697,11 +683,11 @@ export default function LoginPage() {
                 </div>
 
                 {/* Arrow 3 */}
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-start', flex: 1, paddingTop: '15px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '2px', animation: 'slideArrow 1.4s ease-in-out infinite', animationDelay: '0.7s' }}>
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#60a5fa', opacity: 0.7 }} />
-                    <div style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#60a5fa', opacity: 0.5 }} />
-                    <ChevronRight size={16} style={{ color: '#6366f1' }} />
+                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#60a5fa', opacity: 0.8 }} />
+                    <div style={{ width: '5px', height: '5px', borderRadius: '50%', background: '#818cf8', opacity: 0.6 }} />
+                    <ChevronRight size={18} style={{ color: '#6366f1' }} strokeWidth={2.5} />
                   </div>
                 </div>
 
@@ -712,7 +698,6 @@ export default function LoginPage() {
                   </div>
                   <span className="flow-label text-indigo-600">School</span>
                 </div>
-              </div>
             </div>
 
             {/* Footer status */}
