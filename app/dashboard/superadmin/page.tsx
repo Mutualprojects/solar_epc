@@ -909,7 +909,7 @@ export default function SuperAdminDashboard() {
               ) : !mounted ? (
                 <div className="h-72 w-full flex items-center justify-center bg-slate-50/50 rounded-xl text-xs font-bold text-slate-400">Loading Visuals...</div>
               ) : (
-                <div className="h-72 w-full mt-4">
+                <div className="h-72 w-full mt-4" style={{ minHeight: '288px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={finalProgressionData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                       <defs>
@@ -972,7 +972,7 @@ export default function SuperAdminDashboard() {
                   <span className="text-xs font-black text-slate-455 uppercase tracking-widest">No District Matches Found</span>
                 </div>
               ) : (
-                <div className="h-72 w-full mt-4">
+                <div className="h-72 w-full mt-4" style={{ minHeight: '288px' }}>
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={districtProgressData} margin={{ top: 5, right: 5, left: -25, bottom: 5 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
